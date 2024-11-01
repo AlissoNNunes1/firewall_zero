@@ -23,3 +23,12 @@ def add_chapter(request):
     else:
         form = ChapterForm()
     return render(request, 'game/add_chapter.html', {'form': form})
+
+def settings(request):
+    return render(request, 'game/settings.html')
+
+def about(request):
+    return render(request, 'game/about.html')
+
+def credits(request):
+    return render(request, 'game/credits.html')
