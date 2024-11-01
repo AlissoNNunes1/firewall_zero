@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ chapter.title }}</title>
+</head>
+<body>
+    <h1>{{ chapter.title }}</h1>
+    <p>{{ chapter.content }}</p>
+    <ul>
+        {% for choice in chapter.choices.all %}
+            <li><a href="{% url 'chapter_view' choice.next_chapter.id %}">{{ choice.text }}</a></li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
