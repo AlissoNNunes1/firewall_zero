@@ -6,6 +6,7 @@
 <body>
     <h1>{{ chapter.title }}</h1>
     <p>{{ chapter.content }}</p>
+    <img src="{{ chapter.character.image.url }}" alt="{{ chapter.character.name }}">
     <ul>
         {% for choice in chapter.choices.all %}
             <li><a href="{% url 'chapter_view' choice.next_chapter.id %}">{{ choice.text }}</a></li>
