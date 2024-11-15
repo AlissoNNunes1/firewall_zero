@@ -12,4 +12,45 @@ body, h1, h2, h3, h4, h5, h6, p, ul, li, a {
 
 * {
     font-family: 'Tiny 5';
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body {
+    height: 100vh;
+    font-family: "IBM Plex Mono", monospace;
+}
+
+body {
+    line-height: 1.5;
+    background-color: #212529;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+input,
+button,
+textarea,
+select {
+    font: inherit;
+    color: inherit;
+    padding: 48px;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+li {
+    list-style: none;
 }
