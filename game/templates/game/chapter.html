@@ -15,7 +15,16 @@
     <ul>
         {% for choice in chapter.choices.all %}
             {% if choice.next_chapter %}
-                <li><a href="{% url 'chapter_view' choice.next_chapter.num %}">{{ choice.text }}</a></li>
+                <li>
+                    <a href="{% url 'chapter_view' choice.next_chapter.num %}"
+                       onclick="document.getElementById('update-progress-form-{{ choice.next_chapter.num }}').submit();">
+                        {{ choice.text }}
+                    </a>
+                    <form id="update-progress-form-{{ choice.next_chapter.num }}" method="post" action="{% url 'update_progress' %}" style="display: none;">
+                        {% csrf_token %}
+                        <input type="hidden" name="next_chapter_num" value="{{ choice.next_chapter.num }}">
+                    </form>
+                </li>
             {% else %}
                 <li>{{ choice.text }}</li>
             {% endif %}
