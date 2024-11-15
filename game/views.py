@@ -2,8 +2,8 @@ from django.shortcuts import render, get_object_or_404
 from .models import Chapter
 from .forms import ChapterForm
 
-def chapter_view(request, chapter_id):
-    chapter = get_object_or_404(Chapter, id=chapter_id)
+def chapter_view(request, chapter_num):
+    chapter = get_object_or_404(Chapter, num=chapter_num)
     return render(request, 'game/chapter.html', {'chapter': chapter})
 
 def home_view(request):

@@ -4,4 +4,4 @@ from .models import Chapter
 class ChapterForm(forms.ModelForm):
     class Meta:
         model = Chapter
-        fields = ['title', 'content', 'next_chapter']
+        fields = ['title', 'num', 'content', 'next_chapter', 'character']
