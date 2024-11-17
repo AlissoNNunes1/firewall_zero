@@ -20,13 +20,20 @@
     <p class="chapter_question">{{ chapter.content }}</p>
     <ul class="chapter_answer_list">
       {% for choice in chapter.choices.all %}
-      <li class="chapter_answer_item">
-        <a
-          class="chapter_answer_link"
-          href="{% url 'chapter_view' choice.next_chapter.id %}"
-          >{{ choice.text }}</a
-        >
-      </li>
+        {% if choice.next_chapter %}
+        <li class="chapter_answer_item">
+          <a
+            class="chapter_answer_link"
+            href="{% url 'chapter_view' choice.next_chapter.num %}"
+            >{{ choice.text }}</a>
+            <form id="update-progress-form-{{ choice.next_chapter.num }}" method="post" action="{% url 'update_progress' %}" style="display: none;">
+              {% csrf_token %}
+              <input type="hidden" name="next_chapter_num" value="{{ choice.next_chapter.num }}">
+          </form>
+        </li>
+        {% else %}
+        <li>{{ choice.text }}</li>
+        {% endif %}
       {% endfor %}
     </ul>
     <div class="character_container">
