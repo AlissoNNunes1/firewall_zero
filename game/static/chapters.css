@@ -1,0 +1,136 @@
+.chapter_background {
+  background-image: url("../../media/images/chapter_background.jpg");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+
+  width: 50%;
+  margin: 0 auto;
+
+  overflow: hidden;
+}
+
+.chapter_title {
+  width: 100%;
+  text-align: left;
+  animation: slideInLeft 1s forwards;
+}
+
+.chapter_title .chapter_num {
+  font-weight: bold;
+  font-size: 3rem;
+}
+
+.chapter_title .chapter_description {
+  font-size: 2rem;
+  margin-top: 1rem;
+  font-weight: 400;
+}
+
+.chapter_question {
+  font-family: "Courier New", Courier, monospace;
+  font-weight: 600;
+  font-size: 1rem;
+  text-align: justify;
+
+  animation: slideInRight 1s forwards;
+}
+
+.chapter_answer_list {
+  display: flex;
+  flex-direction: column;
+  align-items: end;
+
+  gap: 1rem;
+  width: 100%;
+
+  animation: slideInBottomToTop 2s forwards;
+}
+
+.chapter_answer_item {
+  background-image: url(../../media/images/chapter_answers.jpg);
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+
+  display: flex;
+  align-items: center;
+
+  width: 75%;
+
+  &:hover {
+    scale: 1.05;
+  }
+  transition: scale 0.5s;
+}
+
+.chapter_answer_link {
+  display: block;
+  color: white;
+  width: 100%;
+  padding: 1rem;
+  margin-left: 2rem;
+}
+
+.character_container {
+  position: fixed;
+  bottom: 5%;
+  right: 5%;
+}
+
+.character_base {
+  position: relative;
+
+  padding: 9rem;
+  background-image: url(../../media/images/chapter_character_base.png);
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.character {
+  position: absolute;
+  bottom: 50%;
+  right: 5%;
+  padding: 10rem;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInBottomToTop {
+  from {
+    transform: translateY(1000%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}

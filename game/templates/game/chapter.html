@@ -1,34 +1,48 @@
 {% load static %}
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>{{ chapter.title }}</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Tiny5&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'global.css' %}">
-</head>
-<body>
-    <h1>{{ chapter.title }}</h1>
-    <p>{{ chapter.content }}</p>
-    <img src="{{ chapter.character.image.url }}" alt="{{ chapter.character.name }}">
-    <ul>
-        {% for choice in chapter.choices.all %}
-            {% if choice.next_chapter %}
-                <li>
-                    <a href="{% url 'chapter_view' choice.next_chapter.num %}"
-                       onclick="document.getElementById('update-progress-form-{{ choice.next_chapter.num }}').submit();">
-                        {{ choice.text }}
-                    </a>
-                    <form id="update-progress-form-{{ choice.next_chapter.num }}" method="post" action="{% url 'update_progress' %}" style="display: none;">
-                        {% csrf_token %}
-                        <input type="hidden" name="next_chapter_num" value="{{ choice.next_chapter.num }}">
-                    </form>
-                </li>
-            {% else %}
-                <li>{{ choice.text }}</li>
-            {% endif %}
-        {% endfor %}
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Tiny5&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="{% static 'global.css' %}" />
+    <link rel="stylesheet" href="{% static 'chapters.css' %}" />
+  </head>
+  <body class="chapter_background">
+    <h1 class="chapter_title">
+      <span class="chapter_num">Capítulo {{ chapter.num }}:</span>
+      <span class="chapter_description">{{ chapter.title}}</span>
+    </h1>
+    <p class="chapter_question">{{ chapter.content }}</p>
+    <ul class="chapter_answer_list">
+      {% for choice in chapter.choices.all %}
+        {% if choice.next_chapter %}
+        <li class="chapter_answer_item">
+          <a
+            class="chapter_answer_link"
+            href="{% url 'chapter_view' choice.next_chapter.num %}"
+            >{{ choice.text }}</a>
+            <form id="update-progress-form-{{ choice.next_chapter.num }}" method="post" action="{% url 'update_progress' %}" style="display: none;">
+              {% csrf_token %}
+              <input type="hidden" name="next_chapter_num" value="{{ choice.next_chapter.num }}">
+          </form>
+        </li>
+        {% else %}
+        <li>{{ choice.text }}</li>
+        {% endif %}
+      {% endfor %}
     </ul>
-</body>
+    <div class="character_container">
+      <div class="character_base"></div>
+      <div
+        style="
+        background-image: url('{{ chapter.character.image.url }}');"
+        class="character"
+      ></div>
+    </div>
+  </body>
 </html>
