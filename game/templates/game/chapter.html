@@ -25,6 +25,7 @@
           <a
             class="chapter_answer_link"
             href="{% url 'chapter_view' choice.next_chapter.num %}"
+            onclick="document.getElementById('update-progress-form-{{ choice.next_chapter.num }}').submit();"
             >{{ choice.text }}</a>
             <form id="update-progress-form-{{ choice.next_chapter.num }}" method="post" action="{% url 'update_progress' %}" style="display: none;">
               {% csrf_token %}
@@ -32,7 +33,7 @@
           </form>
         </li>
         {% else %}
-        <li>{{ choice.text }}</li>
+        <li class="chapter_answer_item">{{ choice.text }}</li>
         {% endif %}
       {% endfor %}
     </ul>
