@@ -11,19 +11,27 @@
 </head>
 <body class="screen_background">
     <h1 class="screen_title">
-        
         <span class="screen_description">{{ screen.title }}</span>
     </h1>
     <p class="screen_question">{{ screen.content }}</p>
     <ul class="screen_answer_list">
         {% for choice in screen.choices.all %}
-            {% if choice.next_chapter %}
+            {% if choice.next_screen %}
                 <li class="screen_answer_item">
-                    <a class="screen_answer_link" href="{% url 'chapter_view' choice.next_chapter.num %}">{{ choice.text }}</a>
+                    <a class="screen_answer_link" href="{% url 'screen_view' choice.next_screen.num %}"
+                       onclick="document.getElementById('update-progress-form-{{ choice.next_screen.num }}').submit();">
+                        {{ choice.text }}
+                    </a>
+                    <form id="update-progress-form-{{ choice.next_screen.num }}" method="post" action="{% url 'update_progress' %}" style="display: none;">
+                        {% csrf_token %}
+                        <input type="hidden" name="next_screen_num" value="{{ choice.next_screen.num }}">
+                    </form>
                 </li>
-            {% elif choice.next_screen %}
+            {% elif choice.hacking_mini_game %}
                 <li class="screen_answer_item">
-                    <a class="screen_answer_link" href="{% url 'screen_view' choice.next_screen.num %}">{{ choice.text }}</a>
+                    <a class="screen_answer_link" href="{% url 'hacking_mini_game_view' choice.hacking_mini_game.id %}">
+                        {{ choice.text }}
+                    </a>
                 </li>
             {% else %}
                 <li class="screen_answer_item">{{ choice.text }}</li>
@@ -31,8 +39,13 @@
         {% endfor %}
     </ul>
     <div class="character_container">
-        <div class="character_base"></div>
-        <div style="background-image: url('{{ screen.character.image.url }}');" class="character"></div>
+        {% for personagem in personagens %}
+            <div class="character_base"></div>
+            <div style="background-image: url('{{ personagem.imagem.url }}');" class="character"></div>
+        {% endfor %}
+    </div>
+    <div class="interactive_messages">
+        {{ screen.mensagens_interativas|safe }}
     </div>
     <script>
         {{ screen.custom_js|safe }}

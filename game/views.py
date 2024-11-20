@@ -1,6 +1,6 @@
 # views.py
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import Chapter, UserProgress, Screen
+from .models import Chapter, UserProgress, Screen, HackingMiniGame
 from .forms import ChapterForm
 from django.views.decorators.http import require_POST
 from django.contrib.sessions.models import Session
@@ -16,6 +16,11 @@ def get_user_progress(request):
         session = Session.objects.get(session_key=session_key)
         user_progress, created = UserProgress.objects.get_or_create(session=session)
     return user_progress
+
+def hacking_mini_game_view(request, game_id):
+    game = get_object_or_404(HackingMiniGame, id=game_id)
+    configuracao = game.configuracao
+    return render(request, 'game/hacking_mini_game.html', {'game': game, 'configuracao': configuracao})
 
 def home_view(request):
     first_screen = Screen.objects.filter(num=1).first()
@@ -37,7 +42,9 @@ def chapter_view(request, chapter_num):
 
 def screen_view(request, screen_num):
     screen = get_object_or_404(Screen, num=screen_num)
-    return render(request, 'game/screen.html', {'screen': screen})
+    personagens = screen.personagens.all()
+    return render(request, 'game/screen.html', {'screen': screen, 'personagens': personagens})
+
 
 def chapter_list(request):
     chapters = Chapter.objects.all()

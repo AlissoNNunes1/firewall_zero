@@ -1,0 +1,38 @@
+#hacking-game-container {
+    width: 100%;
+    height: 400px;
+    border: 1px solid #000;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: #f0f0f0;
+}
+
+#sequence-container, #buttons-container {
+    margin: 20px 0;
+}
+
+.button {
+    width: 50px;
+    height: 50px;
+    margin: 10px;
+    background-color: #007bff;
+    color: white;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    border-radius: 5px;
+    user-select: none;
+}
+
+.button:hover {
+    background-color: #0056b3;
+}
+
+#result {
+    margin-top: 20px;
+    font-size: 1.2rem;
+    color: #333;
+}

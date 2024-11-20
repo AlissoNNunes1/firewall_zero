@@ -11,4 +11,5 @@ urlpatterns = [
     path("credits/", views.credits, name="credits"),
     path('update_progress/', views.update_progress, name='update_progress'),
     path('screen/<str:screen_num>/', views.screen_view, name='screen_view'),
+    path('hacking_mini_game/<int:game_id>/', views.hacking_mini_game_view, name='hacking_mini_game_view'),
 ]
