@@ -1,0 +1,135 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ screen.title }}</title>
+    <link rel="stylesheet" href="{% static 'puzzle.css' %}">
+</head>
+
+<body class="chapter_background">
+    <div class="container">
+        <div id="display" class="display" style="position: relative; width: 480px; height: 240px;"></div>
+        <div id="inputs" class="inputs" style="display: none;">
+            <div class="input-container">
+                <input type="text" id="input1" maxlength="1">
+                <input type="text" id="input2" maxlength="1">
+                <input type="text" id="input3" maxlength="1">
+                <input type="text" id="input4" maxlength="1">
+            </div>
+            <button id="verificarButton" onclick="verificarRespostas()">Verificar Resposta</button>
+        </div>
+    </div>
+    <script>
+        let valores = [];
+        let currentIndex = 0;
+
+        const displayElement = document.getElementById("display");
+        const inputsElement = document.getElementById("inputs");
+        const verificarButton = document.getElementById("verificarButton");
+
+        function gerarValorAleatorio() {
+            const aleatorio = Math.random();
+            if (aleatorio < 0.5) {
+                return Math.floor(Math.random() * 10);
+            } else {
+                const letras = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+                return letras[Math.floor(Math.random() * letras.length)];
+            }
+        }
+
+        function mostrarValores() {
+            if (currentIndex < 4) {
+                const valor = gerarValorAleatorio();
+                valores.push(valor);
+                displayElement.textContent = valor;
+
+                displayElement.style.animation = 'none';
+                displayElement.offsetHeight;
+                displayElement.style.animation = 'fadeIn 0.25s ease-in-out';
+
+                const containerWidth = 480;
+                const containerHeight = 240;
+                const randomX = Math.floor(Math.random() * (containerWidth - displayElement.offsetWidth));
+                const randomY = Math.floor(Math.random() * (containerHeight - displayElement.offsetHeight));
+                displayElement.style.left = `${randomX}px`;
+                displayElement.style.top = `${randomY}px`;
+
+                currentIndex++;
+                setTimeout(mostrarValores, 1000);
+            } else {
+                displayElement.style.display = "none";
+                inputsElement.style.display = "flex";
+                document.getElementById('input1').focus();
+            }
+        }
+
+        function verificarRespostas() {
+            const input1 = document.getElementById("input1").value.toUpperCase();
+            const input2 = document.getElementById("input2").value.toUpperCase();
+            const input3 = document.getElementById("input3").value.toUpperCase();
+            const input4 = document.getElementById("input4").value.toUpperCase();
+            const inputValue = input1 + input2 + input3 + input4;
+            let respostasCorretas = true;
+            for (let i = 0; i < 4; i++) {
+                if (inputValue[i] !== valores[i].toString().toUpperCase()) {
+                    respostasCorretas = false;
+                    break;
+                }
+            }
+
+            if (respostasCorretas) {
+                alert("Parabéns, você acertou todos!");
+            } else {
+                alert("Alguma resposta está incorreta. Tente novamente.");
+            }
+        }
+
+        function irParaProximoCampo(currentInputId, nextInputId, prevInputId) {
+            const currentInput = document.getElementById(currentInputId);
+
+            currentInput.addEventListener('input', function () {
+                if (currentInput.value.length === 1) {
+                    document.getElementById(nextInputId).focus();
+                }
+                verificarUltimoCaractere();
+            });
+
+            currentInput.addEventListener('keydown', function (event) {
+                if (event.key === 'Backspace' && currentInput.value.length === 0) {
+                    document.getElementById(prevInputId).focus();
+                } else if (event.key === 'Enter') {
+                    verificarRespostas();
+                }
+                verificarUltimoCaractere();
+            });
+        }
+
+        function verificarUltimoCaractere() {
+            const input1 = document.getElementById("input1").value;
+            const input2 = document.getElementById("input2").value;
+            const input3 = document.getElementById("input3").value;
+            const input4 = document.getElementById("input4").value;
+            if (input1 && input2 && input3 && input4) {
+                verificarButton.classList.add("show");
+            } else {
+                verificarButton.classList.remove("show");
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            irParaProximoCampo('input1', 'input2', 'input1');
+            irParaProximoCampo('input2', 'input3', 'input1');
+            irParaProximoCampo('input3', 'input4', 'input2');
+            irParaProximoCampo('input4', 'input4', 'input3');
+        });
+
+        window.onload = function () {
+            mostrarValores();
+        };
+    </script>
+</body>
+
+</html>
