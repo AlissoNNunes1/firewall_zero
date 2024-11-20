@@ -16,7 +16,7 @@ class ScreenChoiceInline(admin.TabularInline):
 
 class ScreenAdmin(admin.ModelAdmin):
     list_display = ('name',)
-    fields = ['name', 'num','title', 'content', 'custom_css', 'custom_js', 'chapter']
+    fields = ['name', 'num','title', 'content', 'custom_css', 'custom_js', 'chapter','personagens',]
     inlines = [ScreenChoiceInline]
 
 admin.site.register(Character)
