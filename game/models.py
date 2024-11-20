@@ -1,3 +1,4 @@
+# models.py
 from django.db import models
 from django.contrib.auth.models import User
 from django.contrib.sessions.models import Session
@@ -17,17 +18,28 @@ class Character(models.Model):
 class Chapter(models.Model):
     title = models.CharField(max_length=100)
     num = models.IntegerField(default=0)
-    content = models.TextField()
-    next_chapter = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True)
     character = models.ForeignKey(Character, on_delete=models.CASCADE, related_name='chapters')
 
     def __str__(self):
         return self.title
 
+# models.py
+class Screen(models.Model):
+    name = models.CharField(max_length=100)
+    num = models.CharField(max_length=100)
+    title = models.CharField(max_length=100)
+    content = models.TextField()
+    custom_css = models.TextField(blank=True, null=True)
+    custom_js = models.TextField(blank=True, null=True)
+    chapter = models.ForeignKey(Chapter, on_delete=models.CASCADE, related_name='screens')
+
+    def __str__(self):
+        return self.title
+
 class Choice(models.Model):
-    chapter = models.ForeignKey(Chapter, on_delete=models.CASCADE, related_name='choices')
+    screen = models.ForeignKey(Screen, on_delete=models.CASCADE, related_name='choices', null=True, blank=True)
     text = models.CharField(max_length=200)
-    next_chapter = models.ForeignKey(Chapter, on_delete=models.SET_NULL, null=True, blank=True, related_name='previous_choices')
+    next_screen = models.ForeignKey(Screen, on_delete=models.SET_NULL, null=True, blank=True, related_name='previous_choices')
 
     def __str__(self):
         return self.text
@@ -35,7 +47,7 @@ class Choice(models.Model):
 class UserProgress(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
     session = models.OneToOneField(Session, on_delete=models.CASCADE, null=True, blank=True)
-    current_chapter = models.ForeignKey(Chapter, on_delete=models.SET_NULL, null=True, blank=True)
+    current_screen = models.ForeignKey(Screen, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
         if self.user:

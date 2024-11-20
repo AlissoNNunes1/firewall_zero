@@ -10,4 +10,5 @@ urlpatterns = [
     path('about/', views.about, name='about'),
     path("credits/", views.credits, name="credits"),
     path('update_progress/', views.update_progress, name='update_progress'),
+    path('screen/<str:screen_num>/', views.screen_view, name='screen_view'),
 ]

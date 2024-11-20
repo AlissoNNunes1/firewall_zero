@@ -66,13 +66,21 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-.chapter_answer_link {
-  display: block;
+
+a{
+  background-image: url("/media/images/chapter_answers.jpg");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
   color: white;
-  width: 100%;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 75%;
   padding: 1rem;
-  text-decoration: none;
-  font-size: 1.2rem;
+  border-radius: 5px;
+  transition: transform 0.3s, box-shadow 0.3s;
 }
 
 .character_container {
