@@ -9,23 +9,30 @@
         {{ screen.custom_css|safe }}
     </style>
 </head>
-<body>
-    <h1>{{ screen.title }}</h1>
-    <p>{{ screen.content }}</p>
-    <ul>
+<body class="screen_background">
+    <h1 class="screen_title">
+        
+        <span class="screen_description">{{ screen.title }}</span>
+    </h1>
+    <p class="screen_question">{{ screen.content }}</p>
+    <ul class="screen_answer_list">
         {% for choice in screen.choices.all %}
             {% if choice.next_chapter %}
-                <li><a href="{% url 'chapter_view' choice.next_chapter.num %}">{{ choice.text }}</a></li>
+                <li class="screen_answer_item">
+                    <a class="screen_answer_link" href="{% url 'chapter_view' choice.next_chapter.num %}">{{ choice.text }}</a>
+                </li>
             {% elif choice.next_screen %}
-                <li><a href="{% url 'screen_view' choice.next_screen.num %}">{{ choice.text }}</a></li>
+                <li class="screen_answer_item">
+                    <a class="screen_answer_link" href="{% url 'screen_view' choice.next_screen.num %}">{{ choice.text }}</a>
+                </li>
             {% else %}
-                <li>{{ choice.text }}</li>
+                <li class="screen_answer_item">{{ choice.text }}</li>
             {% endif %}
         {% endfor %}
     </ul>
     <div class="character_container">
         <div class="character_base"></div>
-        <div style="background-image: url('{{ chapter.character.image.url }}');" class="character"></div>
+        <div style="background-image: url('{{ screen.character.image.url }}');" class="character"></div>
     </div>
     <script>
         {{ screen.custom_js|safe }}
