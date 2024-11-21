@@ -1,0 +1,47 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ game.name }}</title>
+    <link rel="stylesheet" href="{% static 'global.css' %}">
+    <link rel="stylesheet" href="{% static 'hacking_mini_game.css' %}">
+</head>
+<body>
+    <h1>{{ game.name }}</h1>
+    <p>{{ game.descricao }}</p>
+    <div id="hacking-game-container">
+        <div id="stealth-container">
+            <p>Complete o hacking sem ser detectado:</p>
+            <div id="stealth"></div>
+        </div>
+        <div id="result"></div>
+    </div>
+    <script>
+        const configuracao = {{ configuracao|safe }};
+        const stealthContainer = document.getElementById('stealth');
+        const resultContainer = document.getElementById('result');
+        let steps = [];
+
+        // Gerar passos aleatórios com base na dificuldade
+        function generateSteps(dificuldade) {
+            const length = dificuldade === 'fácil' ? 3 : dificuldade === 'média' ? 5 : 7;
+            for (let i = 0; i < length; i++) {
+                steps.push(Math.floor(Math.random() * 10));
+            }
+            stealthContainer.innerHTML = steps.join(' ');
+        }
+
+        // Verificar os passos do usuário
+        function checkSteps(userSteps) {
+            if (userSteps.join('') === steps.join('')) {
+                resultContainer.innerHTML = '<p>Você completou o hacking sem ser detectado!</p>';
+            } else {
+                resultContainer.innerHTML = '<p>Você foi detectado. Tente novamente.</p>';
+            }
+        }
+
+        // Iniciar o jogo
+        generateSteps(configuracao.dificuldade);
+    </script>
+</body>
+</html>

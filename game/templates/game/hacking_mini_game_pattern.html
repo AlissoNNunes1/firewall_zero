@@ -1,0 +1,47 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ game.name }}</title>
+    <link rel="stylesheet" href="{% static 'global.css' %}">
+    <link rel="stylesheet" href="{% static 'hacking_mini_game.css' %}">
+</head>
+<body>
+    <h1>{{ game.name }}</h1>
+    <p>{{ game.descricao }}</p>
+    <div id="hacking-game-container">
+        <div id="pattern-container">
+            <p>Identifique o padrão oculto:</p>
+            <div id="pattern"></div>
+        </div>
+        <div id="result"></div>
+    </div>
+    <script>
+        const configuracao = {{ configuracao|safe }};
+        const patternContainer = document.getElementById('pattern');
+        const resultContainer = document.getElementById('result');
+        let pattern = [];
+
+        // Gerar padrão aleatório com base na dificuldade
+        function generatePattern(dificuldade) {
+            const length = dificuldade === 'fácil' ? 3 : dificuldade === 'média' ? 5 : 7;
+            for (let i = 0; i < length; i++) {
+                pattern.push(Math.floor(Math.random() * 10));
+            }
+            patternContainer.innerHTML = pattern.join(' ');
+        }
+
+        // Verificar o padrão do usuário
+        function checkPattern(userPattern) {
+            if (userPattern.join('') === pattern.join('')) {
+                resultContainer.innerHTML = '<p>Você identificou o padrão com sucesso!</p>';
+            } else {
+                resultContainer.innerHTML = '<p>Padrão incorreto. Tente novamente.</p>';
+            }
+        }
+
+        // Iniciar o jogo
+        generatePattern(configuracao.dificuldade);
+    </script>
+</body>
+</html>

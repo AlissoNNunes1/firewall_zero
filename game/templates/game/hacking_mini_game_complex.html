@@ -1,0 +1,47 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ game.name }}</title>
+    <link rel="stylesheet" href="{% static 'global.css' %}">
+    <link rel="stylesheet" href="{% static 'hacking_mini_game.css' %}">
+</head>
+<body>
+    <h1>{{ game.name }}</h1>
+    <p>{{ game.descricao }}</p>
+    <div id="hacking-game-container">
+        <div id="complex-container">
+            <p>Complete as várias etapas do hacking:</p>
+            <div id="complex"></div>
+        </div>
+        <div id="result"></div>
+    </div>
+    <script>
+        const configuracao = {{ configuracao|safe }};
+        const complexContainer = document.getElementById('complex');
+        const resultContainer = document.getElementById('result');
+        let stages = [];
+
+        // Gerar etapas aleatórias com base na dificuldade
+        function generateStages(dificuldade) {
+            const length = dificuldade === 'fácil' ? 3 : dificuldade === 'média' ? 5 : 7;
+            for (let i = 0; i < length; i++) {
+                stages.push(Math.floor(Math.random() * 10));
+            }
+            complexContainer.innerHTML = stages.join(' ');
+        }
+
+        // Verificar as etapas do usuário
+        function checkStages(userStages) {
+            if (userStages.join('') === stages.join('')) {
+                resultContainer.innerHTML = '<p>Você completou todas as etapas do hacking!</p>';
+            } else {
+                resultContainer.innerHTML = '<p>Etapa incorreta. Tente novamente.</p>';
+            }
+        }
+
+        // Iniciar o jogo
+        generateStages(configuracao.dificuldade);
+    </script>
+</body>
+</html>

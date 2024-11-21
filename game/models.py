@@ -5,9 +5,17 @@ from django.contrib.sessions.models import Session
 from django.contrib.postgres.fields import JSONField
 
 class HackingMiniGame(models.Model):
+    HACKING_TYPES = [
+        ('invasion', 'Hacking para invadir o sistema da célula cibernética'),
+        ('pattern', 'Jogador resolve um puzzle para identificar padrões ocultos'),
+        ('stealth', 'Hacking para acessar o servidor central sem ser detectado'),
+        ('complex', 'Hacking complexo com várias etapas, refletindo a escolha do jogador'),
+    ]
+
     name = models.CharField(max_length=100)
     configuracao = models.JSONField()
     descricao = models.TextField()
+    tipo = models.CharField(max_length=50, choices=HACKING_TYPES ,default="pattern")
 
     def __str__(self):
         return self.name
@@ -46,7 +54,7 @@ class Character(models.Model):
 class Chapter(models.Model):
     title = models.CharField(max_length=100)
     num = models.IntegerField(default=0)
-    character = models.ForeignKey(Character, on_delete=models.CASCADE, related_name='chapters')
+    character = models.ForeignKey(Character, on_delete=models.CASCADE, related_name='chapters',default=1)
 
     def __str__(self):
         return self.title
