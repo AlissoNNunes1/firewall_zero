@@ -53,10 +53,10 @@ class Chapter(models.Model):
 
 # models.py
 class Screen(models.Model):
-    name = models.CharField(max_length=100)
-    num = models.CharField(max_length=100)
-    title = models.CharField(max_length=100)
-    content = models.TextField()
+    name = models.CharField(max_length=100, blank=True, null=True)
+    num = models.IntegerField(blank=True, null=True)
+    title = models.CharField(max_length=100, blank=True, null=True)
+    content = models.TextField(blank=True, null=True)
     custom_css = models.TextField(blank=True, null=True)
     custom_js = models.TextField(blank=True, null=True)
     chapter = models.ForeignKey(Chapter, on_delete=models.CASCADE, related_name='screens')
