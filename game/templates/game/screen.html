@@ -42,7 +42,7 @@
     <div class="character_container">
         {% for personagem in personagens %}
             <div class="character_base"></div>
-            <div style="background-image: url('{{ personagem.imagem.url }}');" class="character"></div>
+            <div style="background-image: url('{{ personagem.image.url }}');" class="character"></div>
         {% endfor %}
     </div>
     <div class="interactive_messages">
@@ -56,6 +56,30 @@
                 <!-- Adicione aqui a lógica para exibir os parâmetros específicos da missão -->
             </div>
         {% endfor %}
+    </div>
+    <div class="interactive_scenes">
+        {% for cena in cenas_interativas %}
+            <div class="interactive_scene">
+                <h2>{{ cena.nome }}</h2>
+                <p>{{ cena.descricao }}</p>
+                <!-- Adicione aqui a lógica para exibir os mini-jogos e escolhas da cena -->
+                <div class="mini_games">
+                    {% for mini_jogo in cena.mini_jogos.all %}
+                        <a href="{% url 'hacking_mini_game_view' mini_jogo.id %}">{{ mini_jogo.name }}</a>
+                    {% endfor %}
+                </div>
+                <div class="choices">
+                    {% for escolha in cena.escolhas.all %}
+                        <a href="{% url 'screen_view' escolha.next_screen.num %}">{{ escolha.text }}</a>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    <div class="alignment">
+        {% if alinhamento %}
+            <p>Alinhamento atual: {{ alinhamento }}</p>
+        {% endif %}
     </div>
     <script>
         {{ screen.custom_js|safe }}

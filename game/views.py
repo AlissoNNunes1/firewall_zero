@@ -1,7 +1,9 @@
 # views.py
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import Chapter, UserProgress, Screen, HackingMiniGame, VariavelNarrativa,Choice
+from django.urls import reverse
+from .models import Chapter, UserProgress, Screen, HackingMiniGame, VariavelNarrativa,Choice,Character
 from .forms import ChapterForm
+from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib.sessions.models import Session
 
@@ -19,13 +21,22 @@ def get_user_progress(request):
 
 def hacking_mini_game_view(request, game_id):
     game = get_object_or_404(HackingMiniGame, id=game_id)
-    configuracao = game.configuracao
-    return render(request, 'game/hacking_mini_game.html', {'game': game, 'configuracao': configuracao})
+    if request.method == 'POST':
+        # Lógica para verificar a conclusão do mini-jogo
+        # Supondo que a lógica de verificação esteja correta e o mini-jogo esteja concluído
+        if game.next_screen:
+            return JsonResponse({'next_screen_url': reverse('screen_view', args=[game.next_screen.num])})
+        else:
+            return JsonResponse({'message': 'Mini-jogo concluído, mas nenhuma próxima tela configurada.'})
+    return render(request, 'game/hacking_mini_game.html', {'game': game, 'configuracao': game.configuracao})
 
 def home_view(request):
     first_screen = Screen.objects.filter(num=1).first()
     if not first_screen:
-        first_screen = Screen.objects.create(name="First Screen", num="1", title="First Screen", content="This is the first screen.")
+        first_chapter = Chapter.objects.first()
+        if not first_chapter:
+            first_chapter = Chapter.objects.create(title="First Chapter", num=1, character=Character.objects.first())
+        first_screen = Screen.objects.create(name="First Screen", num="1", title="First Screen", content="This is the first screen.", chapter=first_chapter)
     user_progress = get_user_progress(request)
     current_screen = user_progress.current_screen if user_progress.current_screen else first_screen
     return render(request, 'game/home.html', {'first_screen': first_screen, 'current_screen': current_screen})
@@ -40,11 +51,25 @@ def chapter_view(request, chapter_num):
     
     return render(request, 'game/chapter.html', {'chapter': chapter, 'screens': screens})
 
+
 def screen_view(request, screen_num):
     screen = get_object_or_404(Screen, num=screen_num)
     personagens = screen.personagens.all()
     missoes = screen.missoes.all()
-    return render(request, 'game/screen.html', {'screen': screen, 'personagens': personagens, 'missoes': missoes})
+    cenas_interativas = screen.cenas_interativas.all()
+
+    # Verificar o alinhamento do jogador
+    alinhamento = None
+    if screen.alinhamento:
+        alinhamento = screen.alinhamento
+
+    return render(request, 'game/screen.html', {
+        'screen': screen,
+        'personagens': personagens,
+        'missoes': missoes,
+        'cenas_interativas': cenas_interativas,
+        'alinhamento': alinhamento,
+    })
 
 
 def chapter_list(request):
@@ -77,11 +102,23 @@ def update_progress(request):
                 variavel.valor += var_value
                 variavel.save()
     
+    # Determinar o alinhamento do jogador
+    alinhamento = determine_alignment(user_progress)
     if not user_progress.current_screen or next_screen.num > user_progress.current_screen.num:
         user_progress.current_screen = next_screen
         user_progress.save()
     
     return redirect('screen_view', screen_num=next_screen.num)
+
+def determine_alignment(user_progress):
+    # Lógica para determinar o alinhamento com base nas variáveis narrativas
+    variaveis = VariavelNarrativa.objects.all()
+    alinhamento = "Neutro"
+    if variaveis.filter(nome="bondade").exists() and variaveis.get(nome="bondade").valor > 10:
+        alinhamento = "Bondoso"
+    elif variaveis.filter(nome="maldade").exists() and variaveis.get(nome="maldade").valor > 10:
+        alinhamento = "Maligno"
+    return alinhamento
 
 def settings(request):
     return render(request, 'game/settings.html')

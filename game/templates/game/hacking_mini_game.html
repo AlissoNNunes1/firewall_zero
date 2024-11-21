@@ -47,6 +47,22 @@
                 currentStep++;
                 if (currentStep === sequence.length) {
                     resultContainer.innerHTML = '<p>Você hackeou o sistema com sucesso!</p>';
+                    fetch("{% url 'hacking_mini_game_view' game.id %}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({completed: true})
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.next_screen_url) {
+                            window.location.href = data.next_screen_url;
+                        } else {
+                            alert(data.message);
+                        }
+                    });
                 }
             } else {
                 resultContainer.innerHTML = '<p>Sequência incorreta. Tente novamente.</p>';
