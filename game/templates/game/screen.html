@@ -25,6 +25,7 @@
                     <form id="update-progress-form-{{ choice.next_screen.num }}" method="post" action="{% url 'update_progress' %}" style="display: none;">
                         {% csrf_token %}
                         <input type="hidden" name="next_screen_num" value="{{ choice.next_screen.num }}">
+                        <input type="hidden" name="choice_id" value="{{ choice.id }}">
                     </form>
                 </li>
             {% elif choice.hacking_mini_game %}
@@ -46,6 +47,15 @@
     </div>
     <div class="interactive_messages">
         {{ screen.mensagens_interativas|safe }}
+    </div>
+    <div class="missions">
+        {% for missao in missoes %}
+            <div class="mission">
+                <h2>{{ missao.tipo }}</h2>
+                <p>{{ missao.descricao }}</p>
+                <!-- Adicione aqui a lógica para exibir os parâmetros específicos da missão -->
+            </div>
+        {% endfor %}
     </div>
     <script>
         {{ screen.custom_js|safe }}

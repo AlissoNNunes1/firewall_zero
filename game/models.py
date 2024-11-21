@@ -72,10 +72,11 @@ class Screen(models.Model):
     opcoes = models.JSONField(blank=True, null=True)
     personagens = models.ManyToManyField(Character, blank=True)
     mensagens_interativas = models.TextField(blank=True, null=True)
-    missoes = models.ManyToManyField(Missao, blank=True)
+    missoes = models.ManyToManyField(Missao, blank=True)  # Adicionar campo para missões
     flashback = models.BooleanField(default=False)
     condicoes = models.JSONField(blank=True, null=True)
     cenas_interativas = models.ManyToManyField(CenaInterativa, blank=True)
+
     def __str__(self):
         return self.title
 
@@ -84,8 +85,22 @@ class Choice(models.Model):
     text = models.CharField(max_length=200)
     next_screen = models.ForeignKey(Screen, on_delete=models.SET_NULL, null=True, blank=True, related_name='previous_choices')
     hacking_mini_game = models.ForeignKey(HackingMiniGame, on_delete=models.SET_NULL, null=True, blank=True, related_name='choices')
+    variaveis_narrativas = models.JSONField(blank=True, null=True)  # Adicionar campo para variáveis narrativas
+
     def __str__(self):
         return self.text
+class Missao(models.Model):
+    TIPOS_MISSAO = [
+        ('furtividade', 'Furtividade'),
+        ('combate', 'Combate'),
+    ]
+
+    descricao = models.TextField()
+    tipo = models.CharField(max_length=50, choices=TIPOS_MISSAO)
+    parametros = models.JSONField()
+
+    def __str__(self):
+        return self.descricao
 
 class UserProgress(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)

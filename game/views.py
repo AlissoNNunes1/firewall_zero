@@ -1,6 +1,6 @@
 # views.py
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import Chapter, UserProgress, Screen, HackingMiniGame
+from .models import Chapter, UserProgress, Screen, HackingMiniGame, VariavelNarrativa,Choice
 from .forms import ChapterForm
 from django.views.decorators.http import require_POST
 from django.contrib.sessions.models import Session
@@ -43,7 +43,8 @@ def chapter_view(request, chapter_num):
 def screen_view(request, screen_num):
     screen = get_object_or_404(Screen, num=screen_num)
     personagens = screen.personagens.all()
-    return render(request, 'game/screen.html', {'screen': screen, 'personagens': personagens})
+    missoes = screen.missoes.all()
+    return render(request, 'game/screen.html', {'screen': screen, 'personagens': personagens, 'missoes': missoes})
 
 
 def chapter_list(request):
@@ -66,11 +67,21 @@ def update_progress(request):
     next_screen = get_object_or_404(Screen, num=next_screen_num)
     user_progress = get_user_progress(request)
     
+    # Aplicar alterações nas variáveis narrativas
+    choice_id = request.POST.get('choice_id')
+    if choice_id:
+        choice = get_object_or_404(Choice, id=choice_id)
+        if choice.variaveis_narrativas:
+            for var_name, var_value in choice.variaveis_narrativas.items():
+                variavel, created = VariavelNarrativa.objects.get_or_create(nome=var_name)
+                variavel.valor += var_value
+                variavel.save()
+    
     if not user_progress.current_screen or next_screen.num > user_progress.current_screen.num:
         user_progress.current_screen = next_screen
         user_progress.save()
     
-    return redirect('screen_view', screen_num=next_screen_num)
+    return redirect('screen_view', screen_num=next_screen.num)
 
 def settings(request):
     return render(request, 'game/settings.html')
