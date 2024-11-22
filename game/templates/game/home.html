@@ -10,10 +10,10 @@
     <link rel="stylesheet" href="{% static 'home.css' %}">
 </head>
 <body>
-    <img src="{% static '/media/images/firewall_full_logo.gif' %}" id="logo">
+    <img src="{% static 'images/firewall_full_logo.gif' %}" id="logo">
     <ul>
-        <li><a href="{% url 'screen_view' first_screen.num %}">Iniciar Jogo</a></li>
-        <li><a href="{% url 'screen_view' current_screen.num %}">Continuar</a></li>
+        <li><a href="{% url 'screen_view' first_screen.chapter.num first_screen.num %}">Iniciar Jogo</a></li>
+        <li><a href="{% url 'screen_view' current_screen.chapter.num current_screen.num %}">Continuar</a></li>
         <li><a href="{% url 'settings' %}">Configurações</a></li>
         <li><a href="{% url 'credits' %}">Créditos</a></li>
     </ul>

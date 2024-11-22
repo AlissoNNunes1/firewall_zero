@@ -14,11 +14,15 @@
         <span class="screen_description">{{ screen.title }}</span>
     </h1>
     <p class="screen_question">{{ screen.content }}</p>
+
+    <div class="interactive_messages">
+        {{ screen.mensagens_interativas|safe }}
+    </div>
     <ul class="screen_answer_list">
         {% for choice in screen.choices.all %}
             {% if choice.next_screen %}
                 <li class="screen_answer_item">
-                    <a class="screen_answer_link" href="{% url 'screen_view' choice.next_screen.num %}"
+                    <a class="screen_answer_link" href="{% url 'screen_view' choice.next_screen.chapter.num choice.next_screen.num %}"
                        onclick="document.getElementById('update-progress-form-{{ choice.next_screen.num }}').submit();">
                         {{ choice.text }}
                     </a>
@@ -45,9 +49,7 @@
             <div style="background-image: url('{{ personagem.image.url }}');" class="character"></div>
         {% endfor %}
     </div>
-    <div class="interactive_messages">
-        {{ screen.mensagens_interativas|safe }}
-    </div>
+    
     <div class="missions">
         {% for missao in missoes %}
             <div class="mission">
@@ -70,7 +72,7 @@
                 </div>
                 <div class="choices">
                     {% for escolha in cena.escolhas.all %}
-                        <a href="{% url 'screen_view' escolha.next_screen.num %}">{{ escolha.text }}</a>
+                        <a href="{% url 'screen_view' escolha.next_screen.chapter.num escolha.next_screen.num %}">{{ escolha.text }}</a>
                     {% endfor %}
                 </div>
             </div>

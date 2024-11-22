@@ -12,7 +12,7 @@ class ChapterAdmin(admin.ModelAdmin):
     fields = ['title', 'num', 'character']
 
 class ScreenAdmin(admin.ModelAdmin):
-    list_display = ('name', 'num', 'title')
+    list_display = ('name', 'num', 'title','chapter')
     fields = ['name', 'num', 'title', 'content', 'custom_css', 'custom_js', 'chapter', 'hacking_mini_games', 'opcoes', 'personagens', 'mensagens_interativas', 'missoes', 'flashback', 'condicoes', 'cenas_interativas']
     inlines = [ChoiceInline]
 
