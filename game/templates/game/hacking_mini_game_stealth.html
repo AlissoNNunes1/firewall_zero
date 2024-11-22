@@ -7,24 +7,29 @@
     <link rel="stylesheet" href="{% static 'hacking_mini_game.css' %}">
 </head>
 <body>
-    <h1>{{ game.name }}</h1>
-    <p>{{ game.descricao }}</p>
+    <h1 id='name'>{{ game.name }}</h1>
+    <p id ='desc'>{{ game.descricao }}</p>
     <div id="hacking-game-container">
         <div id="stealth-container">
             <p>Complete o hacking sem ser detectado:</p>
             <div id="stealth"></div>
         </div>
         <div id="result"></div>
+        <div id="timer">Tempo restante: <span id="time">60</span> segundos</div>
     </div>
     <script>
         const configuracao = {{ configuracao|safe }};
         const stealthContainer = document.getElementById('stealth');
         const resultContainer = document.getElementById('result');
+        const timerContainer = document.getElementById('time');
         let steps = [];
+        let userSteps = [];
+        let currentStep = 0;
+        let timeLeft = configuracao.tempo_limite;
 
         // Gerar passos aleatórios com base na dificuldade
         function generateSteps(dificuldade) {
-            const length = dificuldade === 'fácil' ? 3 : dificuldade === 'média' ? 5 : 7;
+            const length = dificuldade === 'fácil' ? 3 : dificuldade === 'média' ? 5 : dificuldade === 'difícil' ? 10 : 7;
             for (let i = 0; i < length; i++) {
                 steps.push(Math.floor(Math.random() * 10));
             }
@@ -32,16 +37,63 @@
         }
 
         // Verificar os passos do usuário
-        function checkSteps(userSteps) {
-            if (userSteps.join('') === steps.join('')) {
-                resultContainer.innerHTML = '<p>Você completou o hacking sem ser detectado!</p>';
+        function checkSteps() {
+            if (userSteps[currentStep] === steps[currentStep]) {
+                currentStep++;
+                if (currentStep === steps.length) {
+                    resultContainer.innerHTML = '<p>Você completou o hacking sem ser detectado!</p>';
+                    clearInterval(timer);
+                    fetch("{% url 'hacking_mini_game_view' game.id %}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({completed: true})
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.next_screen_url) {
+                            window.location.href = data.next_screen_url;
+                        } else {
+                            alert(data.message);
+                        }
+                    });
+                }
             } else {
                 resultContainer.innerHTML = '<p>Você foi detectado. Tente novamente.</p>';
+                resetGame();
             }
         }
 
+        // Reiniciar o jogo
+        function resetGame() {
+            userSteps = [];
+            currentStep = 0;
+        }
+
+        // Adicionar evento de clique aos passos
+        stealthContainer.addEventListener('click', () => {
+            const userInput = prompt('Digite o próximo número da sequência:');
+            if (userInput !== null) {
+                userSteps.push(parseInt(userInput));
+                checkSteps();
+            }
+        });
+
         // Iniciar o jogo
         generateSteps(configuracao.dificuldade);
+
+        // Timer
+        const timer = setInterval(() => {
+            timeLeft--;
+            timerContainer.textContent = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                resultContainer.innerHTML = '<p>Tempo esgotado. Tente novamente.</p>';
+                resetGame();
+            }
+        }, 1000);
     </script>
 </body>
 </html>

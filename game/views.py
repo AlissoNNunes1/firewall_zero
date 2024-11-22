@@ -28,7 +28,19 @@ def hacking_mini_game_view(request, game_id):
             return JsonResponse({'next_screen_url': reverse('screen_view', args=[game.next_screen.chapter.num, game.next_screen.num])})
         else:
             return JsonResponse({'message': 'Mini-jogo concluído, mas nenhuma próxima tela configurada.'})
-    return render(request, 'game/hacking_mini_game.html', {'game': game, 'configuracao': game.configuracao})
+    
+    # Selecionar o template correto com base no tipo de mini-jogo
+    template_name = ''
+    if game.tipo == 'invasion':
+        template_name = 'game/hacking_mini_game_invasion.html'
+    elif game.tipo == 'pattern':
+        template_name = 'game/hacking_mini_game_pattern.html'
+    elif game.tipo == 'stealth':
+        template_name = 'game/hacking_mini_game_stealth.html'
+    elif game.tipo == 'complex':
+        template_name = 'game/hacking_mini_game_complex.html'
+    
+    return render(request, template_name, {'game': game, 'configuracao': game.configuracao})
 
 def home_view(request):
     # Carregar dados essenciais do banco de dados

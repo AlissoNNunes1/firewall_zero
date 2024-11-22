@@ -7,24 +7,29 @@
     <link rel="stylesheet" href="{% static 'hacking_mini_game.css' %}">
 </head>
 <body>
-    <h1>{{ game.name }}</h1>
-    <p>{{ game.descricao }}</p>
+    <h1 id='name'>{{ game.name }}</h1>
+    <p id ='desc'>{{ game.descricao }}</p>
     <div id="hacking-game-container">
         <div id="complex-container">
             <p>Complete as várias etapas do hacking:</p>
             <div id="complex"></div>
         </div>
         <div id="result"></div>
+        <div id="timer">Tempo restante: <span id="time">60</span> segundos</div>
     </div>
     <script>
         const configuracao = {{ configuracao|safe }};
         const complexContainer = document.getElementById('complex');
         const resultContainer = document.getElementById('result');
+        const timerContainer = document.getElementById('time');
         let stages = [];
+        let userStages = [];
+        let currentStage = 0;
+        let timeLeft = configuracao.tempo_limite;
 
         // Gerar etapas aleatórias com base na dificuldade
         function generateStages(dificuldade) {
-            const length = dificuldade === 'fácil' ? 3 : dificuldade === 'média' ? 5 : 7;
+            const length = dificuldade === 'fácil' ? 3 : dificuldade === 'média' ? 5 : dificuldade === 'difícil' ? 10 : 7;
             for (let i = 0; i < length; i++) {
                 stages.push(Math.floor(Math.random() * 10));
             }
@@ -32,16 +37,63 @@
         }
 
         // Verificar as etapas do usuário
-        function checkStages(userStages) {
-            if (userStages.join('') === stages.join('')) {
-                resultContainer.innerHTML = '<p>Você completou todas as etapas do hacking!</p>';
+        function checkStages() {
+            if (userStages[currentStage] === stages[currentStage]) {
+                currentStage++;
+                if (currentStage === stages.length) {
+                    resultContainer.innerHTML = '<p>Você completou todas as etapas do hacking!</p>';
+                    clearInterval(timer);
+                    fetch("{% url 'hacking_mini_game_view' game.id %}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({completed: true})
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.next_screen_url) {
+                            window.location.href = data.next_screen_url;
+                        } else {
+                            alert(data.message);
+                        }
+                    });
+                }
             } else {
                 resultContainer.innerHTML = '<p>Etapa incorreta. Tente novamente.</p>';
+                resetGame();
             }
         }
 
+        // Reiniciar o jogo
+        function resetGame() {
+            userStages = [];
+            currentStage = 0;
+        }
+
+        // Adicionar evento de clique aos botões
+        complexContainer.addEventListener('click', () => {
+            const userInput = prompt('Digite o próximo número da sequência:');
+            if (userInput !== null) {
+                userStages.push(parseInt(userInput));
+                checkStages();
+            }
+        });
+
         // Iniciar o jogo
         generateStages(configuracao.dificuldade);
+
+        // Timer
+        const timer = setInterval(() => {
+            timeLeft--;
+            timerContainer.textContent = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                resultContainer.innerHTML = '<p>Tempo esgotado. Tente novamente.</p>';
+                resetGame();
+            }
+        }, 1000);
     </script>
 </body>
 </html>

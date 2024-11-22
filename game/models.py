@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.contrib.sessions.models import Session
 
 
+# models.py
 class HackingMiniGame(models.Model):
     HACKING_TYPES = [
         ('invasion', 'Hacking para invadir o sistema da célula cibernética'),
@@ -14,8 +15,10 @@ class HackingMiniGame(models.Model):
     name = models.CharField(max_length=100)
     configuracao = models.JSONField()
     descricao = models.TextField()
+    dificuldade = models.CharField(max_length=50,default="média")
+    tempo_limite = models.IntegerField(default=30)
     tipo = models.CharField(max_length=50, choices=HACKING_TYPES, default="complex")
-    next_screen = models.ForeignKey('Screen', on_delete=models.SET_NULL, null=True, blank=True, related_name='previous_mini_games')  # Novo campo para a próxima tela
+    next_screen = models.ForeignKey('Screen', on_delete=models.SET_NULL, null=True, blank=True, related_name='previous_mini_games')
 
     def __str__(self):
         return self.name
@@ -47,7 +50,7 @@ class Character(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField()
     reputation = models.IntegerField(default=0)
-    image = models.ImageField(upload_to='images/', default='images/default.jpg')
+    image = models.ImageField(upload_to='images/', default='images/zero.png')
 
     def __str__(self):
         return self.name
@@ -73,7 +76,7 @@ class Screen(models.Model):
     custom_css = models.TextField(blank=True, null=True)
     custom_js = models.TextField(blank=True, null=True)
     chapter = models.ForeignKey(Chapter, on_delete=models.CASCADE, related_name='screens')
-    hacking_mini_games = models.ManyToManyField(HackingMiniGame, blank=True)
+    
     opcoes = models.JSONField(blank=True, null=True)
     personagens = models.ManyToManyField(Character, blank=True)
     mensagens_interativas = models.TextField(blank=True, null=True)

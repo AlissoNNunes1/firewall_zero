@@ -7,10 +7,21 @@
     justify-content: center;
     align-items: center;
     background-color: #f0f0f0;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+p#desc {
+    color: white;
 }
 
-#sequence-container, #buttons-container {
+h1#name {
+    color: white;
+}
+
+#sequence-container, #buttons-container, #pattern-container, #stealth-container, #complex-container {
     margin: 20px 0;
+    text-align: center;
 }
 
 .button {
@@ -25,13 +36,21 @@
     cursor: pointer;
     border-radius: 5px;
     user-select: none;
+    transition: background-color 0.3s, transform 0.3s;
 }
 
 .button:hover {
     background-color: #0056b3;
+    transform: scale(1.1);
 }
 
 #result {
+    margin-top: 20px;
+    font-size: 1.2rem;
+    color: #333;
+}
+
+#timer {
     margin-top: 20px;
     font-size: 1.2rem;
     color: #333;

@@ -7,24 +7,29 @@
     <link rel="stylesheet" href="{% static 'hacking_mini_game.css' %}">
 </head>
 <body>
-    <h1>{{ game.name }}</h1>
-    <p>{{ game.descricao }}</p>
+    <h1 id='name'>{{ game.name }}</h1>
+    <p id ='desc'>{{ game.descricao }}</p>
     <div id="hacking-game-container">
         <div id="pattern-container">
             <p>Identifique o padrão oculto:</p>
             <div id="pattern"></div>
         </div>
         <div id="result"></div>
+        <div id="timer">Tempo restante: <span id="time">60</span> segundos</div>
     </div>
     <script>
         const configuracao = {{ configuracao|safe }};
         const patternContainer = document.getElementById('pattern');
         const resultContainer = document.getElementById('result');
+        const timerContainer = document.getElementById('time');
         let pattern = [];
+        let userPattern = [];
+        let currentStep = 0;
+        let timeLeft = configuracao.tempo_limite;
 
         // Gerar padrão aleatório com base na dificuldade
         function generatePattern(dificuldade) {
-            const length = dificuldade === 'fácil' ? 3 : dificuldade === 'média' ? 5 : 7;
+            const length = dificuldade === 'fácil' ? 3 : dificuldade === 'média' ? 5 : dificuldade === 'difícil' ? 10 : 7;
             for (let i = 0; i < length; i++) {
                 pattern.push(Math.floor(Math.random() * 10));
             }
@@ -32,16 +37,63 @@
         }
 
         // Verificar o padrão do usuário
-        function checkPattern(userPattern) {
-            if (userPattern.join('') === pattern.join('')) {
-                resultContainer.innerHTML = '<p>Você identificou o padrão com sucesso!</p>';
+        function checkPattern() {
+            if (userPattern[currentStep] === pattern[currentStep]) {
+                currentStep++;
+                if (currentStep === pattern.length) {
+                    resultContainer.innerHTML = '<p>Você identificou o padrão com sucesso!</p>';
+                    clearInterval(timer);
+                    fetch("{% url 'hacking_mini_game_view' game.id %}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({completed: true})
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.next_screen_url) {
+                            window.location.href = data.next_screen_url;
+                        } else {
+                            alert(data.message);
+                        }
+                    });
+                }
             } else {
                 resultContainer.innerHTML = '<p>Padrão incorreto. Tente novamente.</p>';
+                resetGame();
             }
         }
 
+        // Reiniciar o jogo
+        function resetGame() {
+            userPattern = [];
+            currentStep = 0;
+        }
+
+        // Adicionar evento de clique ao padrão
+        patternContainer.addEventListener('click', () => {
+            const userInput = prompt('Digite o próximo número do padrão:');
+            if (userInput !== null) {
+                userPattern.push(parseInt(userInput));
+                checkPattern();
+            }
+        });
+
         // Iniciar o jogo
         generatePattern(configuracao.dificuldade);
+
+        // Timer
+        const timer = setInterval(() => {
+            timeLeft--;
+            timerContainer.textContent = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                resultContainer.innerHTML = '<p>Tempo esgotado. Tente novamente.</p>';
+                resetGame();
+            }
+        }, 1000);
     </script>
 </body>
 </html>
