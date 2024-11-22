@@ -5,13 +5,60 @@
     <title>{{ game.name }}</title>
     <link rel="stylesheet" href="{% static 'global.css' %}">
     <link rel="stylesheet" href="{% static 'hacking_mini_game.css' %}">
+    <style>
+        #hacking-game-container {
+            width: 80%;
+            max-width: 600px;
+            margin: auto;
+            text-align: center;
+            background-color: #333;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        #complex {
+            font-size: 1.2rem;
+            margin: 10px 0;
+            color: #00ff00;
+        }
+
+        .progress-bar {
+            width: 100%;
+            background-color: #555;
+            border-radius: 5px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .progress {
+            height: 20px;
+            background-color: #00ff00;
+            width: 0%;
+            transition: width 0.5s;
+        }
+
+        .stage-complete {
+            color: #00ff00;
+            font-weight: bold;
+        }
+
+        .stage-failed {
+            color: #ff0000;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
-    <h1 id='name'>{{ game.name }}</h1>
-    <p id ='desc'>{{ game.descricao }}</p>
+    <h1 id="name">{{ game.name }}</h1>
+    <p id="desc">{{ game.descricao }}</p>
     <div id="hacking-game-container">
+        <div class="progress-bar">
+            <div class="progress" id="progress"></div>
+        </div>
         <div id="complex-container">
-            <p>Complete as várias etapas do hacking:</p>
+            <p id="instruction">Complete a etapa:</p>
             <div id="complex"></div>
         </div>
         <div id="result"></div>
@@ -22,67 +69,93 @@
         const complexContainer = document.getElementById('complex');
         const resultContainer = document.getElementById('result');
         const timerContainer = document.getElementById('time');
+        const progressBar = document.getElementById('progress');
+        const instruction = document.getElementById('instruction');
         let stages = [];
-        let userStages = [];
         let currentStage = 0;
         let timeLeft = configuracao.tempo_limite;
 
-        // Gerar etapas aleatórias com base na dificuldade
+        // Gerar várias etapas com diferentes desafios
         function generateStages(dificuldade) {
-            const length = dificuldade === 'fácil' ? 3 : dificuldade === 'média' ? 5 : dificuldade === 'difícil' ? 10 : 7;
+            const length = dificuldade === 'fácil' ? 3 : dificuldade === 'média' ? 5 : dificuldade === 'difícil' ? 7 : 5;
             for (let i = 0; i < length; i++) {
-                stages.push(Math.floor(Math.random() * 10));
+                stages.push({
+                    type: i % 2 === 0 ? 'pattern' : 'sequence',
+                    data: Array.from({ length: 5 }, () => Math.floor(Math.random() * 10))
+                });
             }
-            complexContainer.innerHTML = stages.join(' ');
+            loadStage();
         }
 
-        // Verificar as etapas do usuário
-        function checkStages() {
-            if (userStages[currentStage] === stages[currentStage]) {
+        // Carregar o próximo estágio
+        function loadStage() {
+            if (currentStage >= stages.length) {
+                resultContainer.innerHTML = '<p class="stage-complete">Você concluiu todas as etapas!</p>';
+                clearInterval(timer);
+                fetch("{% url 'hacking_mini_game_view' game.id %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ completed: true })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.next_screen_url) {
+                        window.location.href = data.next_screen_url;
+                    } else {
+                        alert(data.message);
+                    }
+                });
+                return;
+            }
+
+            const stage = stages[currentStage];
+            if (stage.type === 'pattern') {
+                instruction.textContent = "Memorize e repita o padrão:";
+                complexContainer.textContent = stage.data.join(' ');
+                setTimeout(() => {
+                    complexContainer.textContent = "???";
+                }, 3000); // Padrão desaparece após 3 segundos
+            } else if (stage.type === 'sequence') {
+                instruction.textContent = "Responda à sequência:";
+                complexContainer.textContent = `Qual é o próximo número? ${stage.data.slice(0, -1).join(', ')} _`;
+            }
+        }
+
+        // Verificar entrada do usuário
+        function checkStage(input) {
+            const stage = stages[currentStage];
+            const isCorrect = stage.type === 'pattern'
+                ? input.join('') === stage.data.join('')
+                : parseInt(input) === stage.data[stage.data.length - 1];
+
+            if (isCorrect) {
                 currentStage++;
-                if (currentStage === stages.length) {
-                    resultContainer.innerHTML = '<p>Você completou todas as etapas do hacking!</p>';
-                    clearInterval(timer);
-                    fetch("{% url 'hacking_mini_game_view' game.id %}", {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': '{{ csrf_token }}'
-                        },
-                        body: JSON.stringify({completed: true})
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.next_screen_url) {
-                            window.location.href = data.next_screen_url;
-                        } else {
-                            alert(data.message);
-                        }
-                    });
-                }
+                progressBar.style.width = `${(currentStage / stages.length) * 100}%`;
+                loadStage();
             } else {
-                resultContainer.innerHTML = '<p>Etapa incorreta. Tente novamente.</p>';
+                resultContainer.innerHTML = '<p class="stage-failed">Etapa incorreta. Reiniciando...</p>';
                 resetGame();
             }
         }
 
         // Reiniciar o jogo
         function resetGame() {
-            userStages = [];
             currentStage = 0;
+            progressBar.style.width = "0%";
+            loadStage();
         }
 
-        // Adicionar evento de clique aos botões
+        // Input do usuário
         complexContainer.addEventListener('click', () => {
-            const userInput = prompt('Digite o próximo número da sequência:');
-            if (userInput !== null) {
-                userStages.push(parseInt(userInput));
-                checkStages();
+            const input = prompt('Insira sua resposta:');
+            if (input) {
+                const parsedInput = stages[currentStage].type === 'pattern' ? input.split('') : input;
+                checkStage(parsedInput);
             }
         });
-
-        // Iniciar o jogo
-        generateStages(configuracao.dificuldade);
 
         // Timer
         const timer = setInterval(() => {
@@ -94,6 +167,9 @@
                 resetGame();
             }
         }, 1000);
+
+        // Iniciar o jogo
+        generateStages(configuracao.dificuldade);
     </script>
 </body>
 </html>

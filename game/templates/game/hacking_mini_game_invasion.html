@@ -5,10 +5,58 @@
     <title>{{ game.name }}</title>
     <link rel="stylesheet" href="{% static 'global.css' %}">
     <link rel="stylesheet" href="{% static 'hacking_mini_game.css' %}">
+    <style>
+        #hacking-game-container {
+            width: 80%;
+            max-width: 600px;
+            margin: auto;
+            text-align: center;
+            background-color: #333;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        #sequence {
+            font-size: 1.5rem;
+            font-weight: bold;
+            letter-spacing: 5px;
+            color: #00ff00;
+        }
+
+        .button {
+            width: 60px;
+            height: 60px;
+            margin: 10px;
+            background-color: #444;
+            color: white;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.3s, background-color 0.3s;
+        }
+
+        .button:hover {
+            transform: scale(1.1);
+        }
+
+        .button.correct {
+            background-color: #00ff00;
+        }
+
+        .button.incorrect {
+            background-color: #ff0000;
+        }
+    </style>
 </head>
 <body>
-    <h1 id='name'>{{ game.name }}</h1>
-    <p id ='desc'>{{ game.descricao }}</p>
+    <h1 id="name">{{ game.name }}</h1>
+    <p id="desc">{{ game.descricao }}</p>
     <div id="hacking-game-container">
         <div id="sequence-container">
             <p>Memorize a sequência:</p>
@@ -35,19 +83,21 @@
         let currentStep = 0;
         let timeLeft = configuracao.tempo_limite;
 
-        // Gerar sequência aleatória com base na dificuldade
         function generateSequence(dificuldade) {
-            const length = dificuldade === 'fácil' ? 3 : dificuldade === 'média' ? 5 : dificuldade === 'difícil' ? 10 : 7;
-            for (let i = 0; i < length; i++) {
-                sequence.push(Math.floor(Math.random() * 4) + 1);
-            }
+            const length = dificuldade === 'fácil' ? 3 : dificuldade === 'média' ? 5 : dificuldade === 'difícil' ? 8 : 6;
+            sequence = Array.from({ length }, () => Math.floor(Math.random() * 4) + 1);
             sequenceContainer.innerHTML = sequence.join(' ');
+            setTimeout(() => {
+                sequenceContainer.innerHTML = "----";
+            }, 3000); // Mostra por 3 segundos
         }
 
-        // Verificar a sequência do usuário
-        function checkSequence() {
-            if (userSequence[currentStep] === sequence[currentStep]) {
+        function checkSequence(value) {
+            if (sequence[currentStep] === value) {
                 currentStep++;
+                buttons[value - 1].classList.add('correct');
+                setTimeout(() => buttons[value - 1].classList.remove('correct'), 300);
+
                 if (currentStep === sequence.length) {
                     resultContainer.innerHTML = '<p>Você hackeou o sistema com sucesso!</p>';
                     clearInterval(timer);
@@ -69,29 +119,27 @@
                     });
                 }
             } else {
-                resultContainer.innerHTML = '<p>Sequência incorreta. Tente novamente.</p>';
+                buttons[value - 1].classList.add('incorrect');
+                setTimeout(() => buttons[value - 1].classList.remove('incorrect'), 300);
+                resultContainer.innerHTML = '<p>Sequência incorreta. Reiniciando...</p>';
                 resetGame();
             }
         }
 
-        // Reiniciar o jogo
         function resetGame() {
             userSequence = [];
             currentStep = 0;
         }
 
-        // Adicionar evento de clique aos botões
         buttons.forEach(button => {
             button.addEventListener('click', () => {
-                userSequence.push(parseInt(button.getAttribute('data-value')));
-                checkSequence();
+                const value = parseInt(button.getAttribute('data-value'));
+                checkSequence(value);
             });
         });
 
-        // Iniciar o jogo
         generateSequence(configuracao.dificuldade);
 
-        // Timer
         const timer = setInterval(() => {
             timeLeft--;
             timerContainer.textContent = timeLeft;
