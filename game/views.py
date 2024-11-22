@@ -31,15 +31,29 @@ def hacking_mini_game_view(request, game_id):
     return render(request, 'game/hacking_mini_game.html', {'game': game, 'configuracao': game.configuracao})
 
 def home_view(request):
+    # Carregar dados essenciais do banco de dados
     first_screen = Screen.objects.filter(num=1).first()
     if not first_screen:
         first_chapter = Chapter.objects.first()
         if not first_chapter:
             first_chapter = Chapter.objects.create(title="First Chapter", num=1, character=Character.objects.first())
         first_screen = Screen.objects.create(name="First Screen", num=1, title="First Screen", content="This is the first screen.", chapter=first_chapter)
+    
     user_progress = get_user_progress(request)
     current_screen = user_progress.current_screen if user_progress.current_screen else first_screen
-    return render(request, 'game/home.html', {'first_screen': first_screen, 'current_screen': current_screen})
+    
+    # Carregar outros dados essenciais, se necessário
+    characters = Character.objects.all()
+    chapters = Chapter.objects.all()
+    screens = Screen.objects.all()
+    
+    return render(request, 'game/home.html', {
+        'first_screen': first_screen,
+        'current_screen': current_screen,
+        'characters': characters,
+        'chapters': chapters,
+        'screens': screens,
+    })
 
 def chapter_view(request, chapter_num):
     chapter = get_object_or_404(Chapter, num=chapter_num)

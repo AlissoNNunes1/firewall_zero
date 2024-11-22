@@ -34,7 +34,7 @@
 
         // Gerar sequência aleatória com base na dificuldade
         function generateSequence(dificuldade) {
-            const length = dificuldade === 'fácil' ? 3 : dificuldade === 'média' ? 5 : 7;
+            const length = dificuldade === 'fácil' ? 3 : dificuldade === 'média' ? 5 : 7 : dificuldade === 'difícil' ? 10 : 12;
             for (let i = 0; i < length; i++) {
                 sequence.push(Math.floor(Math.random() * 4) + 1);
             }
