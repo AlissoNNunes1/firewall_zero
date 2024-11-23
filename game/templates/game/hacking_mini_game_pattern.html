@@ -10,7 +10,12 @@
     <h1 id="name">{{ game.name }}</h1>
     <p id="desc">{{ game.descricao }}</p>
 
-    <div id="hacking-game-container">
+    <div id="instructions">
+        <p>Instruções: Memorize o padrão oculto e digite os números na sequência correta.</p>
+        <button id="start-button">Começar</button>
+    </div>
+
+    <div id="hacking-game-container" style="display: none;">
         <div id="pattern-container">
             <p>Memorize o padrão oculto:</p>
             <div id="pattern"></div>
@@ -22,6 +27,7 @@
         </div>
         <div id="result"></div>
         <div id="timer">Tempo restante: <span id="time">{{ configuracao.tempo_limite }}</span> segundos</div>
+        <button id="restart-button" style="display: none;">Restart</button>
     </div>
 
     <script>
@@ -31,10 +37,16 @@
         const submitBtn = document.getElementById("submit-btn");
         const resultContainer = document.getElementById("result");
         const timerContainer = document.getElementById("time");
+        const startButton = document.getElementById("start-button");
+        const restartButton = document.getElementById("restart-button");
+        const hackingGameContainer = document.getElementById("hacking-game-container");
+        const instructions = document.getElementById("instructions");
 
         let pattern = [];
         let timeLeft = configuracao.tempo_limite;
         let isPatternVisible = true;
+        let attempts = 2;
+        let timer;
 
         // Gerar padrão aleatório com base na dificuldade
         function generatePattern(dificuldade) {
@@ -67,6 +79,12 @@
                 postCompletion();
             } else {
                 resultContainer.innerHTML = "<p style='color: red;'>Padrão incorreto. Tente novamente.</p>";
+                attempts--;
+                if (attempts > 0) {
+                    restartButton.style.display = 'block';
+                } else {
+                    window.location.href = "{% url 'lose' %}";
+                }
             }
         });
 
@@ -96,17 +114,39 @@
         }
 
         // Timer
-        const timer = setInterval(() => {
-            timeLeft--;
-            timerContainer.textContent = timeLeft;
-            if (timeLeft <= 0) {
-                clearInterval(timer);
-                resultContainer.innerHTML = "<p>Tempo esgotado. Tente novamente.</p>";
-            }
-        }, 1000);
+        function startTimer() {
+            timer = setInterval(() => {
+                timeLeft--;
+                timerContainer.textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    resultContainer.innerHTML = "<p>Tempo esgotado. Tente novamente.</p>";
+                    attempts--;
+                    if (attempts > 0) {
+                        restartButton.style.display = 'block';
+                    } else {
+                        window.location.href = "{% url 'lose' %}";
+                    }
+                }
+            }, 1000);
+        }
 
         // Iniciar jogo
-        generatePattern(configuracao.dificuldade);
+        startButton.addEventListener('click', () => {
+            instructions.style.display = 'none';
+            hackingGameContainer.style.display = 'block';
+            generatePattern(configuracao.dificuldade);
+            startTimer();
+        });
+
+        restartButton.addEventListener('click', () => {
+            userInput.value = '';
+            resultContainer.innerHTML = '';
+            timeLeft = configuracao.tempo_limite;
+            generatePattern(configuracao.dificuldade);
+            startTimer();
+            restartButton.style.display = 'none';
+        });
     </script>
 </body>
 </html>

@@ -57,7 +57,11 @@
 <body>
     <h1 id="name">{{ game.name }}</h1>
     <p id="desc">{{ game.descricao }}</p>
-    <div id="hacking-game-container">
+    <div id="instructions">
+        <p>Instruções: Memorize a sequência de números e clique nos botões na ordem correta.</p>
+        <button id="start-button">Começar</button>
+    </div>
+    <div id="hacking-game-container" style='display:none;'>
         <div id="sequence-container">
             <p>Memorize a sequência:</p>
             <div id="sequence"></div>
@@ -71,6 +75,7 @@
         </div>
         <div id="result"></div>
         <div id="timer">Tempo restante: <span id="time">60</span> segundos</div>
+        <button id="restart-button" style="display: none;">Restart</button>
     </div>
     <script>
         const configuracao = {{ configuracao|safe }};
@@ -78,10 +83,15 @@
         const buttons = document.querySelectorAll('.button');
         const resultContainer = document.getElementById('result');
         const timerContainer = document.getElementById('time');
+        const startButton = document.getElementById('start-button');
+        const restartButton = document.getElementById('restart-button');
+        const hackingGameContainer = document.getElementById('hacking-game-container');
+        const instructions = document.getElementById('instructions');
         let sequence = [];
         let userSequence = [];
         let currentStep = 0;
         let timeLeft = configuracao.tempo_limite;
+        let attempts = 2;
 
         function generateSequence(dificuldade) {
             const length = dificuldade === 'fácil' ? 3 : dificuldade === 'média' ? 5 : dificuldade === 'difícil' ? 8 : 6;
@@ -101,34 +111,46 @@
                 if (currentStep === sequence.length) {
                     resultContainer.innerHTML = '<p>Você hackeou o sistema com sucesso!</p>';
                     clearInterval(timer);
-                    fetch("{% url 'hacking_mini_game_view' game.id %}", {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': '{{ csrf_token }}'
-                        },
-                        body: JSON.stringify({completed: true})
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.next_screen_url) {
-                            window.location.href = data.next_screen_url;
-                        } else {
-                            alert(data.message);
-                        }
-                    });
+                    postCompletion();
                 }
             } else {
                 buttons[value - 1].classList.add('incorrect');
                 setTimeout(() => buttons[value - 1].classList.remove('incorrect'), 300);
                 resultContainer.innerHTML = '<p>Sequência incorreta. Reiniciando...</p>';
-                resetGame();
+                attempts--;
+                if (attempts > 0) {
+                    restartButton.style.display = 'block';
+                } else {
+                    window.location.href = "{% url 'lose' %}";
+                }
             }
         }
 
         function resetGame() {
             userSequence = [];
             currentStep = 0;
+            resultContainer.innerHTML = '';
+            generateSequence(configuracao.dificuldade);
+            restartButton.style.display = 'none';
+        }
+
+        function postCompletion() {
+            fetch("{% url 'hacking_mini_game_view' game.id %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ completed: true })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.next_screen_url) {
+                    window.location.href = data.next_screen_url;
+                } else {
+                    alert(data.message);
+                }
+            });
         }
 
         buttons.forEach(button => {
@@ -138,17 +160,27 @@
             });
         });
 
-        generateSequence(configuracao.dificuldade);
+        startButton.addEventListener('click', () => {
+            instructions.style.display = 'none';
+            hackingGameContainer.style.display = 'block';
+            generateSequence(configuracao.dificuldade);
+            const timer = setInterval(() => {
+                timeLeft--;
+                timerContainer.textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    resultContainer.innerHTML = '<p>Tempo esgotado. Tente novamente.</p>';
+                    attempts--;
+                    if (attempts > 0) {
+                        restartButton.style.display = 'block';
+                    } else {
+                        window.location.href = "{% url 'lose' %}";
+                    }
+                }
+            }, 1000);
+        });
 
-        const timer = setInterval(() => {
-            timeLeft--;
-            timerContainer.textContent = timeLeft;
-            if (timeLeft <= 0) {
-                clearInterval(timer);
-                resultContainer.innerHTML = '<p>Tempo esgotado. Tente novamente.</p>';
-                resetGame();
-            }
-        }, 1000);
+        restartButton.addEventListener('click', resetGame);
     </script>
 </body>
 </html>

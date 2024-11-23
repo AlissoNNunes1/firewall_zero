@@ -3,19 +3,23 @@
     border-radius: 12px;
     padding: 20px;
     width: 80%;
+    max-width: 600px;
     margin: auto;
     color: white;
     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
     text-align: center;
 }
 
-p#desc{
-    color:white
-  }
-  
-h1#name{
-    color: white
-  }
+p#desc {
+    color: white;
+}
+
+
+
+h1#name {
+    color: white;
+}
+
 #sequence-preview {
     font-size: 1.5rem;
     margin-bottom: 15px;
@@ -43,4 +47,40 @@ h1#name{
 #result {
     margin-top: 20px;
     font-size: 1.5rem;
+}
+
+#timer {
+    font-size: 1.2rem;
+    margin-top: 10px;
+}
+
+#complex {
+    font-size: 1.2rem;
+    margin: 10px 0;
+    color: #00ff00;
+}
+
+.progress-bar {
+    width: 100%;
+    background-color: #555;
+    border-radius: 5px;
+    margin: 10px 0;
+    overflow: hidden;
+}
+
+.progress {
+    height: 20px;
+    background-color: #00ff00;
+    width: 0%;
+    transition: width 0.5s;
+}
+
+.stage-complete {
+    color: #00ff00;
+    font-weight: bold;
+}
+
+.stage-failed {
+    color: #ff0000;
+    font-weight: bold;
 }

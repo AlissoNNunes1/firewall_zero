@@ -1,0 +1,103 @@
+
+/* Geral */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: "Arial", sans-serif;
+    background-color: #121212;
+    color: #f5f5f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    overflow: hidden;
+    background: url("../../media/images/credits_background.png") no-repeat
+        center center/cover;
+}
+
+.credits-container {
+    text-align: center;
+    min-width: 750px;
+    animation: fade-in 2s ease-in;
+}
+
+.names-container {
+    background: rgba(0, 0, 0, 0.5); /* Fundo translúcido */
+    padding: 15px;
+    border-radius: 10px;
+}
+
+.name {
+    font-size: 1.3rem;
+    margin-bottom: 8px;
+}
+
+/* Botão */
+.back-button {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease-in-out;
+}
+
+li {
+    list-style: none;
+    text-align: center;
+    background: linear-gradient(45deg, #e27318 47%, #cd5219 100%);
+    margin-top: 16px;
+    font-size: 2rem;
+    box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.75);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 1s;
+}
+
+li:hover {
+    transform: translateY(-3px);
+    box-shadow: 0px 8px 12px rgba(0, 0, 0, 0.3);
+}
+
+li:active {
+    transform: translateY(1px);
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+li a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    padding: 16px 32px;
+    color: white;
+    text-decoration: none;
+}
+
+.credits-back-button {
+    width: 100%;
+    padding: 1rem;
+    transition: all 0.5s;
+}
+
+.credits-back-button:hover {
+    background: linear-gradient(45deg, #cd5219 47%, #e27318 100%);
+}
+
+/* Título */
+h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #f4d03f;
+    margin-bottom: 30px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+/* Animações */
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}

@@ -1,0 +1,41 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Lose Game</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tiny5&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'global.css' %}">
+    <link rel="stylesheet" href="{% static 'lose.css' %}">
+</head>
+<body>
+    <div class="game-over-screen">
+        <div class="message-box">
+            <p>Infelizmente, desta vez você não conseguiu avançar na missão, mas não desanime! Você tem outra chance de completar e mostrar todo o seu potencial. Quer tentar novamente?</p>
+        </div>
+        <button class="restart-button">RESTART?</button>
+    </div>
+</body>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var images = [
+            '../../media/images/lose1.jpg',
+            '../../media/images/lose2.jpg',
+            '../../media/images/lose3.jpg',
+            '../../media/images/lose4.jpg',
+            '../../media/images/lose5.jpg',
+            '../../media/images/lose6.jpg',
+            // Adicione mais caminhos de imagem conforme necessário
+        ];
+    
+        var randomImage = images[Math.floor(Math.random() * images.length)];
+        document.body.style.background = `url('${randomImage}') no-repeat center center`;
+        document.body.style.backgroundSize = 'cover';
+    });
+
+    document.querySelector(".restart-button").addEventListener("click", function() {
+        window.history.back();
+    });
+</script>
+</html>

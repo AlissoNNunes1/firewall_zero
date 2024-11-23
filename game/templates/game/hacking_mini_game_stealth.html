@@ -10,7 +10,12 @@
     <h1 id="name">{{ game.name }}</h1>
     <p id="desc">{{ game.descricao }}</p>
 
-    <div id="hacking-game-container">
+    <div id="instructions">
+        <p>Instruções: Memorize a sequência e clique nos botões na ordem correta sem ser detectado.</p>
+        <button id="start-button">Começar</button>
+    </div>
+
+    <div id="hacking-game-container" style="display: none;">
         <div id="sequence-preview">
             Memorize a sequência: <span id="sequence-display"></span>
         </div>
@@ -19,7 +24,8 @@
             <div id="button-grid"></div>
         </div>
         <div id="result"></div>
-        <div id="timer">Tempo restante: <span id="time">60</span> segundos</div>
+        <div id="timer">Tempo restante: <span id="time">{{ configuracao.tempo_limite }}</span> segundos</div>
+        <button id="restart-button" style="display: none;">Restart</button>
     </div>
 
     <audio id="success-sound" src="{% static 'sounds/success.mp3' %}"></audio>
@@ -33,18 +39,24 @@
         const timerContainer = document.getElementById("time");
         const successSound = document.getElementById("success-sound");
         const failSound = document.getElementById("fail-sound");
+        const startButton = document.getElementById("start-button");
+        const restartButton = document.getElementById("restart-button");
+        const hackingGameContainer = document.getElementById("hacking-game-container");
+        const instructions = document.getElementById("instructions");
 
         let steps = [];
         let userSteps = [];
         let currentStep = 0;
         let timeLeft = configuracao.tempo_limite;
+        let attempts = 2;
+        let timer;
 
         // Gerar passos aleatórios
         function generateSteps(dificuldade) {
             const length = dificuldade === "fácil" ? 3 : dificuldade === "média" ? 5 : dificuldade === "difícil" ? 8 : 6;
             steps = Array.from({ length }, () => Math.floor(Math.random() * 10));
             sequenceDisplay.innerText = steps.join(" ");
-            setTimeout(() => sequenceDisplay.innerText = "???", 10000); // Esconde após 3 segundos
+            setTimeout(() => sequenceDisplay.innerText = "???", 3000); // Esconde após 3 segundos
         }
 
         // Criar botões dinâmicos
@@ -83,7 +95,12 @@
             } else {
                 failSound.play();
                 resultContainer.innerHTML = "<p>Você foi detectado. Tente novamente.</p>";
-                resetGame();
+                attempts--;
+                if (attempts > 0) {
+                    restartButton.style.display = 'block';
+                } else {
+                    window.location.href = "{% url 'lose' %}";
+                }
             }
         }
 
@@ -91,8 +108,12 @@
         function resetGame() {
             userSteps = [];
             currentStep = 0;
-            resultContainer.innerHTML = "<p>O jogo foi reiniciado!</p>";
+            resultContainer.innerHTML = '';
+            timeLeft = configuracao.tempo_limite;
+            generateSteps(configuracao.dificuldade);
             createButtons();
+            startTimer();
+            restartButton.style.display = 'none';
         }
 
         // Enviar resultado ao servidor
@@ -115,20 +136,34 @@
             });
         }
 
-        // Iniciar o jogo
-        generateSteps(configuracao.dificuldade);
-        createButtons();
-
         // Timer
-        const timer = setInterval(() => {
-            timeLeft--;
-            timerContainer.textContent = timeLeft;
-            if (timeLeft <= 0) {
-                clearInterval(timer);
-                resultContainer.innerHTML = "<p>Tempo esgotado. Tente novamente.</p>";
-                resetGame();
-            }
-        }, 1000);
+        function startTimer() {
+            timer = setInterval(() => {
+                timeLeft--;
+                timerContainer.textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    resultContainer.innerHTML = "<p>Tempo esgotado. Tente novamente.</p>";
+                    attempts--;
+                    if (attempts > 0) {
+                        restartButton.style.display = 'block';
+                    } else {
+                        window.location.href = "{% url 'lose' %}";
+                    }
+                }
+            }, 1000);
+        }
+
+        // Iniciar o jogo
+        startButton.addEventListener('click', () => {
+            instructions.style.display = 'none';
+            hackingGameContainer.style.display = 'block';
+            generateSteps(configuracao.dificuldade);
+            createButtons();
+            startTimer();
+        });
+
+        restartButton.addEventListener('click', resetGame);
     </script>
 </body>
 </html>

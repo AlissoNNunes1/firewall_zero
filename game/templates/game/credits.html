@@ -1,17 +1,168 @@
+
 {% load static %}
 <!DOCTYPE html>
-<html>
-<head>
-    <title>Créditos</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Tiny5&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'global.css' %}">
-</head>
-<body>
-    <h1>Créditos</h1>
-    <ul>
-        <li><a href="{% url 'home_view' %}">Voltar</a></li>
-    </ul>
-</body>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Créditos</title>
+        <link rel="stylesheet" href="{% static 'global.css' %}" />
+        <link rel="stylesheet" href="{% static 'credits.css' %}" />
+    </head>
+    <body>
+        <div class="credits-container fade-background">
+            <div class="names-container">
+                <h1>Créditos</h1>
+
+                <div class="names">
+                    <div
+                        class="name"
+                        data-name="Adonai Santos Fernandes: Historiador, Game Designer"
+                    ></div>
+                    <div
+                        class="name"
+                        data-name="Alisson Andrade Nunes: Historiador, Game Developer"
+                    ></div>
+                    <div
+                        class="name"
+                        data-name="Isaac Castro Silva: Historiador, Game Designer"
+                    ></div>
+                    <div
+                        class="name"
+                        data-name="Jairo Williams Guedes Lopes Neto: Game Designer"
+                    ></div>
+                    <div
+                        class="name"
+                        data-name="João Victor Melo Fontes Linhares: Game Designer, Game Developer"
+                    ></div>
+                    <div
+                        class="name"
+                        data-name="Josiely Alves Santos Prado: Historiador, Game Designer"
+                    ></div>
+                    <div
+                        class="name"
+                        data-name="Leonardo dos Santos Feitoza: Game Designer"
+                    ></div>
+                    <div
+                        class="name"
+                        data-name="Raphael Moraes Goettenauer de Oliveira: Designer, Character Maker"
+                    ></div>
+                </div>
+            </div>
+        </div>
+
+        <ul class="back-button">
+            <li>
+                <a class="credits-back-button" href="{% url 'home_view' %}"
+                    >Voltar</a
+                >
+            </li>
+        </ul>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                const glitchChars = "!@#$%^&*()_+=-{}[]|:;'<>,.?/~`0123456789";
+                const speed = 50; // Velocidade da troca de caracteres em ms
+                const names = document.querySelectorAll(".name");
+                const backButton = document.querySelector(".back-button");
+
+                const delayBetweenNames = 1500; // Delay entre os nomes (ms)
+
+                const fadeBackground =
+                    document.querySelector(".fade-background");
+                setTimeout(() => {
+                    fadeBackground.style.opacity = "1"; // Ativa a transição do background
+                }, 500);
+
+                let animationsRunning = true; // Flag para controlar o estado da animação
+
+                // Função para animar os créditos
+                const animateNames = () => {
+                    names.forEach((nameElement, index) => {
+                        const fullName = nameElement.dataset.name;
+                        let currentText = "";
+
+                        const updateText = () => {
+                            let glitchText = "";
+                            for (let i = 0; i < fullName.length; i++) {
+                                glitchText +=
+                                    i < currentText.length
+                                        ? currentText[i]
+                                        : glitchChars[
+                                              Math.floor(
+                                                  Math.random() *
+                                                      glitchChars.length
+                                              )
+                                          ];
+                            }
+                            nameElement.textContent = glitchText;
+
+                            if (
+                                currentText === fullName ||
+                                !animationsRunning
+                            ) {
+                                nameElement.textContent = fullName; // Garante o nome completo
+                                return;
+                            }
+                            setTimeout(() => updateText(), speed);
+                        };
+
+                        const revealName = () => {
+                            let charIndex = 0;
+                            const interval = setInterval(() => {
+                                currentText = fullName.slice(0, charIndex + 1);
+                                charIndex++;
+                                updateText();
+                                if (
+                                    charIndex === fullName.length ||
+                                    !animationsRunning
+                                ) {
+                                    clearInterval(interval);
+                                    nameElement.textContent = fullName; // Garante o nome completo
+                                }
+                            }, speed);
+                        };
+
+                        setTimeout(() => {
+                            if (animationsRunning) {
+                                nameElement.style.opacity = "1";
+                                revealName();
+                            }
+                        }, index * delayBetweenNames);
+                    });
+                };
+
+                // Exibir botão após clicar ou ao final da animação
+                const showButtonAndNamesInstantly = () => {
+                    animationsRunning = false;
+
+                    // Exibe todos os nomes completos instantaneamente
+                    names.forEach((nameElement) => {
+                        const fullName = nameElement.dataset.name;
+                        nameElement.style.opacity = "1";
+                        nameElement.textContent = fullName; // Substitui texto "bugado" pelo nome completo
+                    });
+
+                    // Exibe o botão
+                    backButton.style.opacity = "1";
+                    backButton.style.pointerEvents = "auto";
+                };
+
+                // Inicia a animação dos nomes
+                animateNames();
+
+                // Mostra tudo após o tempo total, caso não haja clique
+                setTimeout(() => {
+                    if (animationsRunning) {
+                        showButtonAndNamesInstantly();
+                    }
+                }, names.length * delayBetweenNames);
+
+                // Evento de clique para mostrar tudo instantaneamente
+                document.addEventListener("click", () => {
+                    showButtonAndNamesInstantly();
+                });
+            });
+        </script>
+    </body>
 </html>

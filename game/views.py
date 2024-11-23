@@ -23,11 +23,14 @@ def hacking_mini_game_view(request, game_id):
     game = get_object_or_404(HackingMiniGame, id=game_id)
     if request.method == 'POST':
         # Lógica para verificar a conclusão do mini-jogo
-        # Supondo que a lógica de verificação esteja correta e o mini-jogo esteja concluído
-        if game.next_screen:
-            return JsonResponse({'next_screen_url': reverse('screen_view', args=[game.next_screen.chapter.num, game.next_screen.num])})
+        data = json.loads(request.body)
+        if data.get('completed'):
+            if game.next_screen:
+                return JsonResponse({'next_screen_url': reverse('screen_view', args=[game.next_screen.chapter.num, game.next_screen.num])})
+            else:
+                return JsonResponse({'message': 'Mini-jogo concluído, mas nenhuma próxima tela configurada.'})
         else:
-            return JsonResponse({'message': 'Mini-jogo concluído, mas nenhuma próxima tela configurada.'})
+            return JsonResponse({'lose_url': reverse('lose')})
     
     # Selecionar o template correto com base no tipo de mini-jogo
     template_name = ''
@@ -151,3 +154,6 @@ def about(request):
 
 def credits(request):
     return render(request, 'game/credits.html')
+
+def lose(request):
+    return render(request, 'game/lose.html')
