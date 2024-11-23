@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -6,8 +7,8 @@
     <link rel="stylesheet" href="{% static 'hacking_mini_game.css' %}">
 </head>
 <body>
-    <h1 id="game-title">{{ game.name }}</h1>
-    <p id="game-description">{{ game.descricao }}</p>
+    <h1 id="name">{{ game.name }}</h1>
+    <p id="desc">{{ game.descricao }}</p>
 
     <div id="hacking-game-container">
         <div id="sequence-preview">
@@ -40,10 +41,10 @@
 
         // Gerar passos aleatórios
         function generateSteps(dificuldade) {
-            const length = dificuldade === "fácil" ? 3 : dificuldade === "média" ? 5 : dificuldade === "difícil" ? 10 : 7;
+            const length = dificuldade === "fácil" ? 3 : dificuldade === "média" ? 5 : dificuldade === "difícil" ? 8 : 6;
             steps = Array.from({ length }, () => Math.floor(Math.random() * 10));
             sequenceDisplay.innerText = steps.join(" ");
-            setTimeout(() => sequenceDisplay.innerText = "???", 3000); // Esconde após 3 segundos
+            setTimeout(() => sequenceDisplay.innerText = "???", 10000); // Esconde após 3 segundos
         }
 
         // Criar botões dinâmicos

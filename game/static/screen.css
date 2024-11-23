@@ -11,9 +11,11 @@
   overflow: hidden;
 }
 
+
 .screen_title {
   width: 100%;
   text-align: left;
+  font-weight: bold;
   animation: slideInLeft 1s forwards;
 }
 
@@ -25,7 +27,7 @@
 .screen_title .screen_description {
   font-size: 2rem;
   margin-top: 1rem;
-  font-weight: 400;
+  font-weight: bold;
 }
 
 .screen_question {
@@ -39,40 +41,63 @@
 .screen_answer_list {
   display: flex;
   flex-direction: column;
-  align-items: end;
+  align-items: center;
   gap: 1rem;
   width: 100%;
   animation: slideInBottomToTop 2s forwards;
 }
 
 .screen_answer_item {
-  background-image: url("/media/images/chapter_answers.jpg");
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-position: center;
+  background: linear-gradient(135deg, #0a0a0a, #1a1a1a); /* Gradiente dark */
   color: white;
   text-align: center;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 75%;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1); /* Bordas sutis */
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s, box-shadow 0.3s, background 0.3s;
+  cursor: pointer;
   padding: 1rem;
-  border-radius: 5px;
-  transition: transform 0.3s, box-shadow 0.3s;
+  font-size: 1.2rem;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.5); /* Sombra leve */
+}
+
+.screen_answer_item::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 200%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(50, 50, 50, 0), rgba(100, 100, 100, 0.2), rgba(50, 50, 50, 0));
+  z-index: 1;
+  transform: skewX(-45deg);
+  transition: left 0.6s ease;
+}
+
+.screen_answer_item:hover::before {
+  left: 0; /* Brilho escuro atravessa o botão */
 }
 
 .screen_answer_item:hover {
   transform: scale(1.05);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 20px rgba(50, 50, 50, 0.4); /* Sombra mais intensa no hover */
+  background: linear-gradient(135deg, #222222, #333); /* Gradiente metálico escuro */
 }
 
 .screen_answer_link {
   display: block;
   color: white;
-  width: 100%;
-  padding: 1rem;
   text-decoration: none;
-  font-size: 1.2rem;
+  font-weight: bold;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  z-index: 2; /* Texto acima dos efeitos */
 }
 
 .character_container {
