@@ -87,7 +87,7 @@
         let stages = [];
         let currentStage = 0;
         let timeLeft = configuracao.tempo_limite;
-        let attempts = 2;
+        let attempts = 3;
         let timer;
 
         // Gerar várias etapas com diferentes desafios
@@ -132,7 +132,7 @@
                 complexContainer.textContent = stage.data.join(' ');
                 setTimeout(() => {
                     complexContainer.textContent = "???";
-                }, 3000); // Padrão desaparece após 3 segundos
+                }, 4000); // Padrão desaparece após 3 segundos
             } else if (stage.type === 'sequence') {
                 instruction.textContent = "Responda à sequência:";
                 complexContainer.textContent = `Qual é o próximo número? ${stage.data.slice(0, -1).join(', ')} _`;
