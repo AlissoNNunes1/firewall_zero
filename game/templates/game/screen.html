@@ -5,11 +5,29 @@
     <title>{{ screen.title }}</title>
     <link rel="stylesheet" href="{% static 'global.css' %}">
     <link rel="stylesheet" href="{% static 'screen.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         {{ screen.custom_css|safe }}
+        .back-to-home-icon {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 2rem;
+            color: white;
+            text-decoration: none;
+            transition: color 0.3s, transform 0.3s;
+        }
+        
+        .back-to-home-icon:hover {
+            color: #007bff;
+            transform: scale(1.1);
+        }
     </style>
 </head>
 <body class="screen_background">
+    <a href="{% url 'home_view' %}" class="back-to-home-icon" onclick="storeCurrentScreen(event)">
+        <i class="fas fa-home"></i>
+    </a>
     <h1 class="screen_title">
         <span class="screen_description">{{ screen.title }}</span>
     </h1>
@@ -43,19 +61,35 @@
             {% endif %}
         {% endfor %}
     </ul>
-    <div class="character_container">
-        {% for personagem in personagens %}
-            <div class="character_base"></div>
-            <div style="background-image: url('{{ personagem.image.url }}');" class="character"></div>
-        {% endfor %}
+    {% if personagens|length > 1 %}
+        <div class="character_container" style="display: flex; left: 0.5%; width: 100%; position: fixed; bottom: 5%; right: 2.5%; justify-content: space-between; align-items: center;">
+            {% for personagem in personagens %}
+                <div class="character_base">
+                    <div id="character_{{ forloop.counter }}" style="background-image: url('{{ personagem.image.url }}');" class="character"></div>
+                    <div class="character_info" style="position: absolute; bottom: 0%; left: 35%; z-index: 2;">
+                        <h3>{{ personagem.name }}</h3>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% elif personagens|length == 1 %}
+        <div class="character_container">
+            {% with personagem=personagens.0 %}
+                <div class="character_base">
+                    <div style="background-image: url('{{ personagem.image.url }}');" class="character"></div>
+                    <div class="character_info" style="position: absolute; bottom: 0%; left: 35%; z-index: 2;">
+                        <h3>{{ personagem.name }}</h3>
+                    </div>
+                </div>
+            {% endwith %}
+        </div>
+    {% endif %}
     </div>
-    
     <div class="missions">
         {% for missao in missoes %}
             <div class="mission">
                 <h2>{{ missao.tipo }}</h2>
                 <p>{{ missao.descricao }}</p>
-                <!-- Adicione aqui a lógica para exibir os parâmetros específicos da missão -->
             </div>
         {% endfor %}
     </div>
@@ -64,7 +98,6 @@
             <div class="interactive_scene">
                 <h2>{{ cena.nome }}</h2>
                 <p>{{ cena.descricao }}</p>
-                <!-- Adicione aqui a lógica para exibir os mini-jogos e escolhas da cena -->
                 <div class="mini_games">
                     {% for mini_jogo in cena.mini_jogos.all %}
                         <a href="{% url 'hacking_mini_game_view' mini_jogo.id %}">{{ mini_jogo.name }}</a>
@@ -85,6 +118,15 @@
     </div>
     <script>
         {{ screen.custom_js|safe }}
+
+        function storeCurrentScreen(event) {
+            event.preventDefault();
+            localStorage.setItem('currentScreen', JSON.stringify({
+                chapter_num: {{ screen.chapter.num }},
+                screen_num: {{ screen.num }}
+            }));
+            window.location.href = "{% url 'home_view' %}";
+        }
     </script>
 </body>
 </html>
