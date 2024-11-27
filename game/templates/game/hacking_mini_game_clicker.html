@@ -1,0 +1,105 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ game.name }}</title>
+    <link rel="stylesheet" href="{% static 'global.css' %}">
+    <link rel="stylesheet" href="{% static 'hacking_mini_game.css' %}">
+    <style>
+        #hacking-game-container {
+            width: 80%;
+            max-width: 600px;
+            margin: auto;
+            text-align: center;
+            background-color: #333;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        .clicker-button {
+            width: 100px;
+            height: 100px;
+            margin: 20px;
+            background-color: #00aaff;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+
+        .clicker-button:hover {
+            background-color: #007acc;
+            transform: scale(1.1);
+        }
+
+        #result {
+            margin-top: 20px;
+            font-size: 1.5rem;
+        }
+
+        #timer {
+            font-size: 1.2rem;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>{{ game.name }}</h1>
+    <p>{{ game.descricao }}</p>
+    <div id="hacking-game-container">
+        <button id="clicker-button" class="clicker-button">Click!</button>
+        <div id="result">Clicks: <span id="click-count">0</span></div>
+        <div id="timer">Tempo restante: <span id="time">{{ configuracao.tempo_limite }}</span> segundos</div>
+    </div>
+    <script>
+        const configuracao = {{ configuracao|safe }};
+        const clickerButton = document.getElementById('clicker-button');
+        const clickCountDisplay = document.getElementById('click-count');
+        const timerDisplay = document.getElementById('time');
+        let clickCount = 0;
+        let timeLeft = configuracao.tempo_limite;
+        let timer;
+
+        clickerButton.addEventListener('click', () => {
+            clickCount++;
+            clickCountDisplay.textContent = clickCount;
+        });
+
+        function startTimer() {
+            timer = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function endGame() {
+            fetch("{% url 'hacking_mini_game_view' game.id %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ completed: true, clicks: clickCount })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.next_screen_url) {
+                    window.location.href = data.next_screen_url;
+                } else {
+                    alert(data.message);
+                }
+            });
+        }
+
+        startTimer();
+    </script>
+</body>
+</html>

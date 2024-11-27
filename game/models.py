@@ -10,6 +10,8 @@ class HackingMiniGame(models.Model):
         ('pattern', 'Jogador resolve um puzzle para identificar padrões ocultos'),
         ('stealth', 'Hacking para acessar o servidor central sem ser detectado'),
         ('complex', 'Hacking complexo com várias etapas, refletindo a escolha do jogador'),
+        ('clicker', 'Hacking clicker, onde o jogador enfrenta a máquina para ver quem clica mais'), 
+       
     ]
 
     name = models.CharField(max_length=100)

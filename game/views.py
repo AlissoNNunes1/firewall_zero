@@ -20,10 +20,10 @@ def get_user_progress(request):
         user_progress, created = UserProgress.objects.get_or_create(session=session)
     return user_progress
 
+# views.py
 def hacking_mini_game_view(request, game_id):
     game = get_object_or_404(HackingMiniGame, id=game_id)
     if request.method == 'POST':
-        # Lógica para verificar a conclusão do mini-jogo
         data = json.loads(request.body)
         if data.get('completed'):
             if game.next_screen:
@@ -43,6 +43,8 @@ def hacking_mini_game_view(request, game_id):
         template_name = 'game/hacking_mini_game_stealth.html'
     elif game.tipo == 'complex':
         template_name = 'game/hacking_mini_game_complex.html'
+    elif game.tipo == 'clicker':
+        template_name = 'game/hacking_mini_game_clicker.html'
     
     return render(request, template_name, {'game': game, 'configuracao': game.configuracao})
 
