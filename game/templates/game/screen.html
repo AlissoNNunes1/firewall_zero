@@ -11,7 +11,7 @@
         .back-to-home-icon {
             position: absolute;
             top: 16px;
-            left: 50%;
+            left: 75%;
             translate: -50%;
             font-size: 2rem;
             color: white;
@@ -20,6 +20,7 @@
             padding: 8px 16px;
             background: linear-gradient(45deg, #e27318 47%, #cd5219 100%);
             border-radius: 50%;
+            z-index: 500;
         }
         
         .back-to-home-icon:hover {
@@ -205,8 +206,8 @@
     <div class="popup" id="popup">
         <button class="close-btn" onclick="hidePopup()">&times;</button>
         <p>Você quer salvar o progresso?</p>
-        <button class="confirm-btn" onclick="saveProgress()">Sim</button>
         <button class="cancel-btn" onclick="goHome()">Não</button>
+        <button class="confirm-btn" onclick="saveProgress()">Sim</button>
     </div>
 
     <script>

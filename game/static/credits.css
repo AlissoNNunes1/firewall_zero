@@ -1,4 +1,3 @@
-
 /* Geral */
 body {
     margin: 0;
@@ -22,13 +21,15 @@ body {
 }
 
 .names-container {
-    background: rgba(0, 0, 0, 0.5); /* Fundo translúcido */
+    background-color: rgba(0, 0, 0, 0.8); /* Fundo translúcido */
     padding: 15px;
     border-radius: 10px;
+    padding: 24px;
 }
 
 .name {
     font-size: 1.3rem;
+    font-weight: bold;
     margin-bottom: 8px;
 }
 
