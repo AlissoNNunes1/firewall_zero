@@ -10,14 +10,14 @@ class HackingMiniGame(models.Model):
         ('pattern', 'Jogador resolve um puzzle para identificar padrões ocultos'),
         ('stealth', 'Hacking para acessar o servidor central sem ser detectado'),
         ('complex', 'Hacking complexo com várias etapas, refletindo a escolha do jogador'),
-        ('clicker', 'Hacking clicker, onde o jogador enfrenta a máquina para ver quem clica mais'), 
-       
+        ('clicker', 'Hacking clicker, onde o jogador enfrenta a máquina para ver quem clica mais'),
+        ('random', 'Aleatório'),  # Novo tipo de mini-jogo
     ]
 
     name = models.CharField(max_length=100)
     configuracao = models.JSONField()
     descricao = models.TextField()
-    dificuldade = models.CharField(max_length=50,default="média")
+    dificuldade = models.CharField(max_length=50, default="média")
     tempo_limite = models.IntegerField(default=30)
     tipo = models.CharField(max_length=50, choices=HACKING_TYPES, default="complex")
     next_screen = models.ForeignKey('Screen', on_delete=models.SET_NULL, null=True, blank=True, related_name='previous_mini_games')

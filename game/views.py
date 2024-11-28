@@ -1,6 +1,7 @@
 # views.py
 import os
 import json
+import random
 from django.conf import settings
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
@@ -45,6 +46,14 @@ def hacking_mini_game_view(request, game_id):
         template_name = 'game/hacking_mini_game_complex.html'
     elif game.tipo == 'clicker':
         template_name = 'game/hacking_mini_game_clicker.html'
+    elif game.tipo == 'random':
+        template_name = random.choice([
+            'game/hacking_mini_game_invasion.html',
+            'game/hacking_mini_game_pattern.html',
+            'game/hacking_mini_game_stealth.html',
+            'game/hacking_mini_game_complex.html',
+            'game/hacking_mini_game_clicker.html'
+        ])
     
     return render(request, template_name, {'game': game, 'configuracao': game.configuracao})
 
