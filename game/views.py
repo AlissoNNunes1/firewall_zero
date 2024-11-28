@@ -1,10 +1,12 @@
 # views.py
+import os
 import json
+from django.conf import settings
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from .models import Chapter, UserProgress, Screen, HackingMiniGame, VariavelNarrativa, Choice, Character
 from .forms import ChapterForm
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_POST
 from django.contrib.sessions.models import Session
 
@@ -16,11 +18,9 @@ def get_user_progress(request):
         if not session_key:
             request.session.create()
             session_key = request.session.session_key
-        session = Session.objects.get(session_key=session_key)
-        user_progress, created = UserProgress.objects.get_or_create(session=session)
+        user_progress, created = UserProgress.objects.get_or_create(session_key=session_key)
     return user_progress
 
-# views.py
 def hacking_mini_game_view(request, game_id):
     game = get_object_or_404(HackingMiniGame, id=game_id)
     if request.method == 'POST':
@@ -58,7 +58,7 @@ def home_view(request):
         first_screen = Screen.objects.create(name="First Screen", num=1, title="First Screen", content="This is the first screen.", chapter=first_chapter)
     
     user_progress = get_user_progress(request)
-    current_screen = user_progress.current_screen if user_progress.current_screen else first_screen
+    current_url = user_progress.current_url if user_progress.current_url else reverse('screen_view', args=[first_screen.chapter.num, first_screen.num])
     
     # Carregar outros dados essenciais, se necessário
     characters = Character.objects.all()
@@ -67,7 +67,7 @@ def home_view(request):
     
     return render(request, 'game/home.html', {
         'first_screen': first_screen,
-        'current_screen': current_screen,
+        'current_url': current_url,
         'characters': characters,
         'chapters': chapters,
         'screens': screens,
@@ -78,8 +78,8 @@ def chapter_view(request, chapter_num):
     screens = chapter.screens.all()
     user_progress = get_user_progress(request)
     
-    if user_progress.current_screen and chapter.num > user_progress.current_screen.chapter.num:
-        return redirect('chapter_view', chapter_num=user_progress.current_screen.chapter.num)
+    if user_progress.current_url and chapter.num > user_progress.current_url.chapter.num:
+        return redirect('chapter_view', chapter_num=user_progress.current_url.chapter.num)
     
     return render(request, 'game/chapter.html', {'chapter': chapter, 'screens': screens})
 
@@ -101,6 +101,7 @@ def screen_view(request, chapter_num, screen_num):
         'cenas_interativas': cenas_interativas,
         'alinhamento': alinhamento,
     })
+
 def chapter_list(request):
     chapters = Chapter.objects.all()
     return render(request, 'game/chapter_list.html', {'chapters': chapters})
@@ -133,11 +134,25 @@ def update_progress(request):
     
     # Determinar o alinhamento do jogador
     alinhamento = determine_alignment(user_progress)
-    if not user_progress.current_screen or next_screen.num > user_progress.current_screen.num:
-        user_progress.current_screen = next_screen
+    if not user_progress.current_url or next_screen.num > user_progress.current_url.num:
+        user_progress.current_url = reverse('screen_view', args=[next_screen.chapter.num, next_screen.num])
         user_progress.save()
     
     return redirect('screen_view', chapter_num=next_screen.chapter.num, screen_num=next_screen.num)
+
+@require_POST
+def save_progress(request):
+    current_url = request.POST.get('current_url')
+    user_progress = get_user_progress(request)
+    user_progress.current_url = current_url
+    user_progress.save()
+    return HttpResponse(status=200)
+
+def continue_progress(request):
+    user_progress = get_user_progress(request)
+    if user_progress.current_url:
+        return redirect(user_progress.current_url)
+    return redirect('home_view')
 
 def determine_alignment(user_progress):
     # Lógica para determinar o alinhamento com base nas variáveis narrativas

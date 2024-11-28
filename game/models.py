@@ -123,12 +123,11 @@ class CenaInterativa(models.Model):
         return self.nome
 
 
+
 class UserProgress(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
-    session = models.OneToOneField(Session, on_delete=models.CASCADE, null=True, blank=True)
-    current_screen = models.ForeignKey(Screen, on_delete=models.SET_NULL, null=True, blank=True)
+    session_key = models.CharField(max_length=40, null=True, blank=True)
+    current_url = models.URLField(max_length=200, null=True, blank=True)
 
     def __str__(self):
-        if self.user:
-            return f"{self.user.username}'s progress"
-        return f"Session {self.session.session_key}'s progress"
+        return f"{self.user.username if self.user else self.session_key} - {self.current_url}"

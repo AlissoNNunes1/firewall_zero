@@ -15,6 +15,8 @@ urlpatterns = [
     path('update_progress/', views.update_progress, name='update_progress'),
     path('lose/', views.lose, name='lose'),
     path('hacking_mini_game/<int:game_id>/', views.hacking_mini_game_view, name='hacking_mini_game_view'),
+    path('save_progress/', views.save_progress, name='save_progress'),
+    path('continue_progress/', views.continue_progress, name='continue_progress'),
 ]
 
 if settings.DEBUG:

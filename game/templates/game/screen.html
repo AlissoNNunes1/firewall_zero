@@ -22,10 +22,37 @@
             color: #007bff;
             transform: scale(1.1);
         }
+
+        .popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+
+        .popup button {
+            margin: 5px;
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
     </style>
 </head>
 <body class="screen_background">
-    <a href="{% url 'home_view' %}" class="back-to-home-icon" onclick="storeCurrentScreen(event)">
+    <a href="#" class="back-to-home-icon" onclick="showPopup(event)">
         <i class="fas fa-home"></i>
     </a>
     <h1 class="screen_title">
@@ -116,15 +143,43 @@
             <p>Alinhamento atual: {{ alinhamento }}</p>
         {% endif %}
     </div>
+
+    <div class="overlay" id="overlay"></div>
+    <div class="popup" id="popup">
+        <p>Você quer salvar o progresso?</p>
+        <button onclick="saveProgress()">Sim</button>
+        <button onclick="goHome()">Não</button>
+    </div>
+
     <script>
         {{ screen.custom_js|safe }}
 
-        function storeCurrentScreen(event) {
+        function showPopup(event) {
             event.preventDefault();
-            localStorage.setItem('currentScreen', JSON.stringify({
-                chapter_num: {{ screen.chapter.num }},
-                screen_num: {{ screen.num }}
-            }));
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('popup').style.display = 'block';
+        }
+
+        function hidePopup() {
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('popup').style.display = 'none';
+        }
+
+        function saveProgress() {
+            const currentUrl = window.location.href;
+            fetch("{% url 'save_progress' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: `current_url=${encodeURIComponent(currentUrl)}`
+            }).then(() => {
+                window.location.href = "{% url 'home_view' %}";
+            });
+        }
+
+        function goHome() {
             window.location.href = "{% url 'home_view' %}";
         }
     </script>
