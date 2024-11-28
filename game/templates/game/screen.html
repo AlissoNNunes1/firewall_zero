@@ -10,12 +10,16 @@
         {{ screen.custom_css|safe }}
         .back-to-home-icon {
             position: absolute;
-            top: 10px;
-            left: 10px;
+            top: 16px;
+            left: 50%;
+            translate: -50%;
             font-size: 2rem;
             color: white;
             text-decoration: none;
             transition: color 0.3s, transform 0.3s;
+            padding: 8px 16px;
+            background: linear-gradient(45deg, #e27318 47%, #cd5219 100%);
+            border-radius: 50%;
         }
         
         .back-to-home-icon:hover {
@@ -33,10 +37,63 @@
             padding: 20px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             z-index: 1000;
+            border-radius: 10px;
+            width: 480px;
+            height: 240px;
+            text-align: center;
+            padding: 48px 24px;
+            flex-direction: column;
+            justify-content: center;
+            gap: 16px;
+            padding: 24px;
         }
 
         .popup button {
-            margin: 5px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .popup .confirm-btn {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .popup .confirm-btn:hover {
+            background-color: #0056b3;
+        }
+
+        .popup .cancel-btn {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .popup .cancel-btn:hover {
+            background-color: #5a6268;
+        }
+
+        .popup .close-btn {
+            position: absolute;
+            top: 0;
+            right: 50%;
+            transform: translate(50%, -75%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #333;
+            border: solid 1px #c1121f;
+            font-size: 24px;
+            font-weight: 900;
+            background-color: white;
+            transition: color 0.3s, background-color 0.3s;
+            color: #c1121f;
+        }
+
+        .popup .close-btn:hover {
+            background-color: #c1121f;
+            color: white;
         }
 
         .overlay {
@@ -144,11 +201,12 @@
         {% endif %}
     </div>
 
-    <div class="overlay" id="overlay"></div>
+    <div class="overlay" id="overlay" onclick="hidePopup()"></div>
     <div class="popup" id="popup">
+        <button class="close-btn" onclick="hidePopup()">&times;</button>
         <p>Você quer salvar o progresso?</p>
-        <button onclick="saveProgress()">Sim</button>
-        <button onclick="goHome()">Não</button>
+        <button class="confirm-btn" onclick="saveProgress()">Sim</button>
+        <button class="cancel-btn" onclick="goHome()">Não</button>
     </div>
 
     <script>
@@ -157,7 +215,7 @@
         function showPopup(event) {
             event.preventDefault();
             document.getElementById('overlay').style.display = 'block';
-            document.getElementById('popup').style.display = 'block';
+            document.getElementById('popup').style.display = 'flex';
         }
 
         function hidePopup() {
