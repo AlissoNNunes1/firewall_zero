@@ -6,18 +6,6 @@
     <link rel="stylesheet" href="{% static 'global.css' %}">
     <link rel="stylesheet" href="{% static 'hacking_mini_game.css' %}">
     <style>
-        #hacking-game-container {
-            width: 80%;
-            max-width: 600px;
-            margin: auto;
-            text-align: center;
-            background-color: #333;
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-        }
-
         #sequence {
             font-size: 1.5rem;
             font-weight: bold;
@@ -52,6 +40,64 @@
         .button.incorrect {
             background-color: #ff0000;
         }
+
+        #buttons-container {
+            display: none;
+        }
+
+        #restart-button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        #restart-button:hover {
+            background-color: #0056b3;
+        }
+        
+        #result p {
+            color: red;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        #result p.success {
+            color: green;
+        }
+        
+        #result p.failure {
+            color: red;
+        }
+
+        #attempts-container {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 1rem;
+            color: #ff9f1c;
+            font-weight: bold;
+        }
+
+        #memorize-timer-container {
+            width: 100%;
+            background-color: #ddd;
+            margin-top: 10px;
+        }
+        
+        #memorize-timer-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #4caf50;
+            transition: width 0.5s;
+        }
     </style>
 </head>
 <body>
@@ -62,6 +108,9 @@
         <button id="start-button">Começar</button>
     </div>
     <div id="hacking-game-container" style='display:none;'>
+        <div id="memorize-timer-container">
+            <div id="memorize-timer-bar"></div>
+        </div>
         <div id="sequence-container">
             <p>Memorize a sequência:</p>
             <div id="sequence"></div>
@@ -72,68 +121,136 @@
             <div class="button" data-value="2">2</div>
             <div class="button" data-value="3">3</div>
             <div class="button" data-value="4">4</div>
+            <div id="timer">Tempo restante: <span id="time"></span> segundos</div>
         </div>
         <div id="result"></div>
-        <div id="timer">Tempo restante: <span id="time">60</span> segundos</div>
         <button id="restart-button" style="display: none;">Restart</button>
+        <div id="attempts-container" style="display: none;">Tentativas restantes: <span id="attempts"></span></div>
     </div>
     <script>
         const configuracao = {{ configuracao|safe }};
         const sequenceContainer = document.getElementById('sequence');
         const buttons = document.querySelectorAll('.button');
         const resultContainer = document.getElementById('result');
-        const timerContainer = document.getElementById('time');
+        const timerContainer = document.getElementById('timer');
+        const timeSpan = document.getElementById('time');
         const startButton = document.getElementById('start-button');
         const restartButton = document.getElementById('restart-button');
         const hackingGameContainer = document.getElementById('hacking-game-container');
         const instructions = document.getElementById('instructions');
+        const buttonsContainer = document.getElementById('buttons-container');
+        const memorizeTimerContainer = document.getElementById('memorize-timer-container');
+        const memorizeTimerBar = document.getElementById('memorize-timer-bar');
+        const attemptsContainer = document.getElementById('attempts-container');
+        const attemptsSpan = document.getElementById('attempts');
+        
         let sequence = [];
         let userSequence = [];
         let currentStep = 0;
         let timeLeft = configuracao.tempo_limite;
-        let attempts = 2;
-
+        let attempts = 3;
+        let timer;
+        
+        function startMemorizeTimer() {
+            memorizeTimeLeft = 5;
+            memorizeTimerBar.style.width = '100%';
+            timer = setInterval(() => {
+                memorizeTimeLeft--;
+                memorizeTimerBar.style.width = (memorizeTimeLeft / 5) * 100 + '%';
+                if (memorizeTimeLeft < 0) {
+                    clearInterval(timer);
+                    startGameTimer();
+                }
+            }, 1000);
+        }
+        
+        function startGameTimer() {
+            timerContainer.style.display = 'block';
+            timeSpan.textContent = timeLeft;
+            sequenceContainer.innerHTML = sequence.map(() => '-').join(' ');
+            timer = setInterval(() => {
+                timeSpan.textContent = timeLeft;
+                buttonsContainer.style.display = 'block';
+                if (timeLeft <= 0) {
+                    timerContainer.style.display = 'none';
+                    resultContainer.innerHTML = '<p>Tempo esgotado. Tente novamente.</p>';
+                    stopTimer();
+                    attempts--
+                    if (attempts > 0) {
+                        restartButton.style.display = 'block';
+                        attemptsContainer.style.display = 'block';
+                        attemptsSpan.textContent = attempts;
+                    } else {
+                        resultContainer.innerHTML = '<p>Acabaram as tentativas. Você será redirecionado em 3 segundos...</p>';
+                        setTimeout(() => {
+                            window.location.href = "{% url 'lose' %}";
+                        }, 3000);
+                    }
+                }
+                timeLeft--;
+            }, 1000);
+        }
+        
         function generateSequence(dificuldade) {
             const length = dificuldade === 'fácil' ? 3 : dificuldade === 'média' ? 5 : dificuldade === 'difícil' ? 8 : 6;
             sequence = Array.from({ length }, () => Math.floor(Math.random() * 4) + 1);
             sequenceContainer.innerHTML = sequence.join(' ');
-            setTimeout(() => {
-                sequenceContainer.innerHTML = "----";
-            }, 4000); // Mostra por 3 segundos
+            startMemorizeTimer();
         }
-
+        
         function checkSequence(value) {
             if (sequence[currentStep] === value) {
                 currentStep++;
                 buttons[value - 1].classList.add('correct');
                 setTimeout(() => buttons[value - 1].classList.remove('correct'), 300);
-
+        
+                let displaySequence = sequence.map((num, index) => index < currentStep ? num : '-').join(' ');
+                sequenceContainer.innerHTML = displaySequence;
+        
                 if (currentStep === sequence.length) {
-                    resultContainer.innerHTML = '<p>Você hackeou o sistema com sucesso!</p>';
-                    clearInterval(timer);
-                    postCompletion();
+                    resultContainer.innerHTML = '<p class="success">Você hackeou o sistema com sucesso! Você será redirecionado em 3 segundos...</p>';
+                    stopTimer();
+                    setTimeout(() => {
+                        postCompletion();
+                    }, 3000);
                 }
             } else {
                 buttons[value - 1].classList.add('incorrect');
                 setTimeout(() => buttons[value - 1].classList.remove('incorrect'), 300);
-                resultContainer.innerHTML = '<p>Sequência incorreta. Reiniciando...</p>';
+                resultContainer.innerHTML = '<p>Sequência incorreta. Tente novamente.</p>';
+                stopTimer();
                 attempts--;
+                attemptsSpan.textContent = attempts;
                 if (attempts > 0) {
                     restartButton.style.display = 'block';
+                    attemptsContainer.style.display = 'block';
                 } else {
-                    window.location.href = "{% url 'lose' %}";
+                    resultContainer.innerHTML = '<p>Acabaram as tentativas. Você será redirecionado em 3 segundos...</p>';
+                    setTimeout(() => {
+                        window.location.href = "{% url 'lose' %}";
+                    }, 3000);
                 }
             }
         }
-
+        
         function resetGame() {
             userSequence = [];
             currentStep = 0;
             resultContainer.innerHTML = '';
             generateSequence(configuracao.dificuldade);
+            buttonsContainer.style.display = 'none';
             restartButton.style.display = 'none';
+            attemptsContainer.style.display = 'none';
+            timeLeft = configuracao.tempo_limite;
+            timeSpan.textContent = timeLeft;
+            stopTimer();
+            startMemorizeTimer();
         }
-
+        
+        function stopTimer() {
+            clearInterval(timer);
+        }
+        
         function postCompletion() {
             fetch("{% url 'hacking_mini_game_view' game.id %}", {
                 method: 'POST',
@@ -152,34 +269,21 @@
                 }
             });
         }
-
+        
         buttons.forEach(button => {
             button.addEventListener('click', () => {
                 const value = parseInt(button.getAttribute('data-value'));
                 checkSequence(value);
             });
         });
-
+        
         startButton.addEventListener('click', () => {
             instructions.style.display = 'none';
             hackingGameContainer.style.display = 'block';
             generateSequence(configuracao.dificuldade);
-            const timer = setInterval(() => {
-                timeLeft--;
-                timerContainer.textContent = timeLeft;
-                if (timeLeft <= 0) {
-                    clearInterval(timer);
-                    resultContainer.innerHTML = '<p>Tempo esgotado. Tente novamente.</p>';
-                    attempts--;
-                    if (attempts > 0) {
-                        restartButton.style.display = 'block';
-                    } else {
-                        window.location.href = "{% url 'lose' %}";
-                    }
-                }
-            }, 1000);
+            timeSpan.textContent = timeLeft;
         });
-
+        
         restartButton.addEventListener('click', resetGame);
     </script>
 </body>
