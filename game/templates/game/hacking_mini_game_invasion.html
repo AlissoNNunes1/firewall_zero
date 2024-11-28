@@ -44,6 +44,39 @@
         #buttons-container {
             display: none;
         }
+
+        #restart-button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        #restart-button:hover {
+            background-color: #0056b3;
+        }
+        
+        #result p {
+            color: red;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        #attempts-container {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 1rem;
+            color: #ff9f1c;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -68,6 +101,7 @@
         </div>
         <div id="result"></div>
         <button id="restart-button" style="display: none;">Restart</button>
+        <div id="attempts-container" style="display: none;">Tentativas restantes: <span id="attempts"></span></div>
     </div>
     <script>
         const configuracao = {{ configuracao|safe }};
@@ -84,7 +118,8 @@
         let userSequence = [];
         let currentStep = 0;
         let timeLeft = configuracao.tempo_limite;
-        let attempts = 2;
+        let attempts = 3;
+        let timer;
 
         function generateSequence(dificuldade) {
             const length = dificuldade === 'fácil' ? 3 : dificuldade === 'média' ? 5 : dificuldade === 'difícil' ? 8 : 6;
@@ -103,34 +138,68 @@
                 currentStep++;
                 buttons[value - 1].classList.add('correct');
                 setTimeout(() => buttons[value - 1].classList.remove('correct'), 300);
-
+        
                 let displaySequence = sequence.map((num, index) => index < currentStep ? num : '-').join(' ');
                 sequenceContainer.innerHTML = displaySequence;
-
+        
                 if (currentStep === sequence.length) {
                     resultContainer.innerHTML = '<p>Você hackeou o sistema com sucesso!</p>';
-                    clearInterval(timer);
+                    stopTimer();
+                    restartButton.style.display = 'block';
                     postCompletion();
                 }
             } else {
                 buttons[value - 1].classList.add('incorrect');
                 setTimeout(() => buttons[value - 1].classList.remove('incorrect'), 300);
-                resultContainer.innerHTML = '<p>Sequência incorreta. Reiniciando...</p>';
+                resultContainer.innerHTML = '<p>Sequência incorreta. Tente novamente.</p>';
                 attempts--;
+                document.getElementById('attempts').textContent = attempts;
                 if (attempts > 0) {
+                    stopTimer();
                     restartButton.style.display = 'block';
+                    document.getElementById('attempts-container').style.display = 'block';
                 } else {
                     window.location.href = "{% url 'lose' %}";
                 }
             }
         }
-
+        
         function resetGame() {
             userSequence = [];
             currentStep = 0;
             resultContainer.innerHTML = '';
             generateSequence(configuracao.dificuldade);
+            buttonsContainer.style.display = 'none';
             restartButton.style.display = 'none';
+            document.getElementById('attempts-container').style.display = 'none';
+            timeLeft = configuracao.tempo_limite;
+            timerContainer.textContent = timeLeft;
+            stopTimer();
+            startTimer();
+        }
+
+        function startTimer() {
+            timer = setInterval(() => {
+                timeLeft--;
+                timerContainer.textContent = timeLeft;
+                if (timeLeft === 25) {
+                    buttonsContainer.style.display = 'block';
+                }
+                if (timeLeft <= 0) {
+                    stopTimer();
+                    resultContainer.innerHTML = '<p>Tempo esgotado. Tente novamente.</p>';
+                    attempts--;
+                    if (attempts > 0) {
+                        restartButton.style.display = 'block';
+                    } else {
+                        window.location.href = "{% url 'lose' %}";
+                    }
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timer);
         }
 
         function postCompletion() {
@@ -164,23 +233,7 @@
             hackingGameContainer.style.display = 'block';
             generateSequence(configuracao.dificuldade);
             timerContainer.textContent = timeLeft;
-            const timer = setInterval(() => {
-                timeLeft--;
-                timerContainer.textContent = timeLeft;
-                if (timeLeft === 25) {
-                    buttonsContainer.style.display = 'block';
-                }
-                if (timeLeft <= 0) {
-                    clearInterval(timer);
-                    resultContainer.innerHTML = '<p>Tempo esgotado. Tente novamente.</p>';
-                    attempts--;
-                    if (attempts > 0) {
-                        restartButton.style.display = 'block';
-                    } else {
-                        window.location.href = "{% url 'lose' %}";
-                    }
-                }
-            }, 1000);
+            startTimer();
         });
 
         restartButton.addEventListener('click', resetGame);
