@@ -6,18 +6,6 @@
     <link rel="stylesheet" href="{% static 'global.css' %}">
     <link rel="stylesheet" href="{% static 'hacking_mini_game.css' %}">
     <style>
-        #hacking-game-container {
-            width: 80%;
-            max-width: 600px;
-            margin: auto;
-            text-align: center;
-            background-color: #333;
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-        }
-
         #sequence {
             font-size: 1.5rem;
             font-weight: bold;
@@ -52,11 +40,15 @@
         .button.incorrect {
             background-color: #ff0000;
         }
+
+        #buttons-container {
+            display: none;
+        }
     </style>
 </head>
 <body>
-    <h1 id="name">{{ game.name }}</h1>
-    <p id="desc">{{ game.descricao }}</p>
+    {% comment %} <h1 id="name">{{ game.name }}</h1>
+    <p id="desc">{{ game.descricao }}</p> {% endcomment %}
     <div id="instructions">
         <p>Instruções: Memorize a sequência de números e clique nos botões na ordem correta.</p>
         <button id="start-button">Começar</button>
@@ -72,9 +64,9 @@
             <div class="button" data-value="2">2</div>
             <div class="button" data-value="3">3</div>
             <div class="button" data-value="4">4</div>
+            <div id="timer">Tempo restante: <span id="time"></span> segundos</div>
         </div>
         <div id="result"></div>
-        <div id="timer">Tempo restante: <span id="time">60</span> segundos</div>
         <button id="restart-button" style="display: none;">Restart</button>
     </div>
     <script>
@@ -87,6 +79,7 @@
         const restartButton = document.getElementById('restart-button');
         const hackingGameContainer = document.getElementById('hacking-game-container');
         const instructions = document.getElementById('instructions');
+        const buttonsContainer = document.getElementById('buttons-container');
         let sequence = [];
         let userSequence = [];
         let currentStep = 0;
@@ -98,8 +91,11 @@
             sequence = Array.from({ length }, () => Math.floor(Math.random() * 4) + 1);
             sequenceContainer.innerHTML = sequence.join(' ');
             setTimeout(() => {
-                sequenceContainer.innerHTML = "----";
-            }, 4000); // Mostra por 3 segundos
+                sequenceContainer.innerHTML = "";
+                for (let i = 0; i < sequence.length; i++) {
+                    sequenceContainer.innerHTML += "-"; 
+                }
+            }, 5000);
         }
 
         function checkSequence(value) {
@@ -107,6 +103,9 @@
                 currentStep++;
                 buttons[value - 1].classList.add('correct');
                 setTimeout(() => buttons[value - 1].classList.remove('correct'), 300);
+
+                let displaySequence = sequence.map((num, index) => index < currentStep ? num : '-').join(' ');
+                sequenceContainer.innerHTML = displaySequence;
 
                 if (currentStep === sequence.length) {
                     resultContainer.innerHTML = '<p>Você hackeou o sistema com sucesso!</p>';
@@ -164,9 +163,13 @@
             instructions.style.display = 'none';
             hackingGameContainer.style.display = 'block';
             generateSequence(configuracao.dificuldade);
+            timerContainer.textContent = timeLeft;
             const timer = setInterval(() => {
                 timeLeft--;
                 timerContainer.textContent = timeLeft;
+                if (timeLeft === 25) {
+                    buttonsContainer.style.display = 'block';
+                }
                 if (timeLeft <= 0) {
                     clearInterval(timer);
                     resultContainer.innerHTML = '<p>Tempo esgotado. Tente novamente.</p>';
