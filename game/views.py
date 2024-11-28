@@ -46,6 +46,14 @@ def hacking_mini_game_view(request, game_id):
         template_name = 'game/hacking_mini_game_complex.html'
     elif game.tipo == 'clicker':
         template_name = 'game/hacking_mini_game_clicker.html'
+    elif game.tipo == 'escape':
+        template_name = 'game/hacking_mini_game_escape.html'
+    elif game.tipo == 'defense':
+        template_name = 'game/defense.html'
+    elif game.tipo == 'cerco':
+        template_name = 'game/cerco.html'
+    elif game.tipo == 'furtivo':
+        template_name = 'game/stealth.html'
     elif game.tipo == 'random':
         template_name = random.choice([
             'game/hacking_mini_game_invasion.html',
@@ -53,7 +61,13 @@ def hacking_mini_game_view(request, game_id):
             'game/hacking_mini_game_stealth.html',
             'game/hacking_mini_game_complex.html',
             'game/hacking_mini_game_clicker.html'
+            'game/hacking_mini_game_escape.html',
+            'game/defense.html',
+            'game/cerco.html',
+            'game/stealth.html',
         ])
+    elif game.tipo == 'final':
+        template_name = 'game/final.html'
     
     return render(request, template_name, {'game': game, 'configuracao': game.configuracao})
 

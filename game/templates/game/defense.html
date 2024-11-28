@@ -1,0 +1,302 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Defesa da Aegis</title>
+    <link rel="stylesheet" href="{% static 'global.css' %}">
+    <link rel="stylesheet" href="{% static 'hacking_mini_game.css' %}">
+    <style>
+        #defense-game-container {
+            width: 90%;
+            max-width: 800px;
+            height: 600px;
+            margin: auto;
+            text-align: center;
+            background-color: #333;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+        h1 {
+            color: white;
+        }
+        p {
+            color: white;
+        }
+        .threat {
+            width: 50px;
+            height: 50px;
+            background-color: red;
+            position: absolute;
+            border-radius: 50%;
+            animation: descend 5s linear infinite;
+        }
+
+        @keyframes descend {
+            from {
+                top: 0;
+            }
+            to {
+                top: 100%;
+            }
+        }
+
+        .critical-info {
+            width: 50px;
+            height: 50px;
+            background-color: yellow;
+            position: absolute;
+            border-radius: 50%;
+            animation: ascend 5s linear infinite;
+        }
+
+        @keyframes ascend {
+            from {
+                top: 100%;
+            }
+            to {
+                top: 0;
+            }
+        }
+
+        #score-board {
+            margin-top: 20px;
+            font-size: 1.2rem;
+        }
+
+        #game-over {
+            display: none;
+            font-size: 1.5rem;
+            color: #f00;
+            margin-top: 20px;
+        }
+
+        #instructions {
+            background-color: #333;
+            border-radius: 12px;
+            padding: 20px;
+            width: 80%;
+            max-width: 600px;
+            margin: auto;
+            color: white;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        #instructions p {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+        }
+
+        #instructions button {
+            background-color: #00aaff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+
+        #instructions button:hover {
+            background-color: #007acc;
+            transform: scale(1.1);
+        }
+
+        #restart-button {
+            display: none;
+            background-color: #00aaff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+
+        #restart-button:hover {
+            background-color: #007acc;
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <h1>Defesa da Aegis</h1>
+    <p>Proteja os sistemas bloqueando ameaças e coletando informações críticas!</p>
+    <div id="instructions">
+        <p>Instruções: Clique nas ameaças vermelhas para bloqueá-las e nas informações críticas amarelas para coletá-las. Não deixe as ameaças passarem!</p>
+        <button id="start-button">Começar</button>
+    </div>
+    <div id="defense-game-container" style="display: none;"></div>
+    <div id="score-board">
+        <p>Score: <span id="score">0</span></p>
+        <p>Vidas Restantes: <span id="lives">3</span></p>
+        <p>Tentativas Restantes: <span id="attempts-left">3</span></p>
+    </div>
+    <div id="game-over">Game Over!</div>
+    <button id="restart-button">Reiniciar</button>
+    <script>
+        const configuracao = {{ configuracao|safe }};
+        const container = document.getElementById('defense-game-container');
+        const scoreDisplay = document.getElementById('score');
+        const livesDisplay = document.getElementById('lives');
+        const attemptsDisplay = document.getElementById('attempts-left');
+        const gameOverDisplay = document.getElementById('game-over');
+        const startButton = document.getElementById('start-button');
+        const instructions = document.getElementById('instructions');
+        const restartButton = document.getElementById('restart-button');
+
+        let score = 0;
+        let lives = 3;
+        let attemptsLeft = 3;
+        let threatInterval;
+        let infoInterval;
+        let targetScore;
+        let threatSpeed;
+        let infoSpeed;
+
+        // Definir a pontuação alvo e a velocidade das ameaças com base na dificuldade
+        switch (configuracao.dificuldade) {
+            case 'fácil':
+                targetScore = 100;
+                threatSpeed = 2000; // 2 segundos
+                infoSpeed = 4000; // 4 segundos
+                break;
+            case 'média':
+                targetScore = 200;
+                threatSpeed = 1500; // 1.5 segundos
+                infoSpeed = 3000; // 3 segundos
+                break;
+            case 'difícil':
+                targetScore = 300;
+                threatSpeed = 1000; // 1 segundo
+                infoSpeed = 2000; // 2 segundos
+                break;
+            default:
+                targetScore = 200;
+                threatSpeed = 1500; // 1.5 segundos
+                infoSpeed = 3000; // 3 segundos
+        }
+
+        function createThreat() {
+            const threat = document.createElement('div');
+            threat.classList.add('threat');
+            threat.style.left = Math.random() * 90 + '%';
+            container.appendChild(threat);
+
+            threat.addEventListener('click', () => {
+                score += 10;
+                scoreDisplay.textContent = score;
+                container.removeChild(threat);
+                checkVictory();
+            });
+
+            setTimeout(() => {
+                if (container.contains(threat)) {
+                    container.removeChild(threat);
+                    loseLife();
+                }
+            }, 5000);
+        }
+
+        function createCriticalInfo() {
+            const info = document.createElement('div');
+            info.classList.add('critical-info');
+            info.style.left = Math.random() * 90 + '%';
+            container.appendChild(info);
+
+            info.addEventListener('click', () => {
+                score += 20;
+                scoreDisplay.textContent = score;
+                container.removeChild(info);
+                checkVictory();
+            });
+
+            setTimeout(() => {
+                if (container.contains(info)) {
+                    container.removeChild(info);
+                }
+            }, 5000);
+        }
+
+        function loseLife() {
+            lives -= 1;
+            livesDisplay.textContent = lives;
+            if (lives <= 0) {
+                endGame(false);
+            }
+        }
+
+        function checkVictory() {
+            if (score >= targetScore) {
+                endGame(true);
+            }
+        }
+
+        function endGame(playerWon) {
+            clearInterval(threatInterval);
+            clearInterval(infoInterval);
+            gameOverDisplay.style.display = 'block';
+            gameOverDisplay.textContent = playerWon ? 'Você venceu!' : 'Game Over!';
+            if (!playerWon) {
+                attemptsLeft--;
+                attemptsDisplay.textContent = attemptsLeft;
+                if (attemptsLeft <= 0) {
+                    window.location.href = "{% url 'lose' %}";
+                } else {
+                    restartButton.style.display = 'block';
+                }
+            } else {
+                postCompletion(playerWon);
+            }
+        }
+
+        function postCompletion(playerWon) {
+            fetch("{% url 'hacking_mini_game_view' game.id %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ completed: playerWon, score: score })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.next_screen_url) {
+                    window.location.href = data.next_screen_url;
+                } else {
+                    alert(data.message);
+                }
+            });
+        }
+
+        function resetGame() {
+            clearInterval(threatInterval);
+            clearInterval(infoInterval);
+            container.innerHTML = '';
+            score = 0;
+            lives = 3;
+            scoreDisplay.textContent = score;
+            livesDisplay.textContent = lives;
+            gameOverDisplay.style.display = 'none';
+            restartButton.style.display = 'none';
+            threatInterval = setInterval(createThreat, threatSpeed);
+            infoInterval = setInterval(createCriticalInfo, infoSpeed);
+        }
+
+        startButton.addEventListener('click', () => {
+            instructions.style.display = 'none';
+            container.style.display = 'block';
+            resetGame();
+        });
+
+        restartButton.addEventListener('click', resetGame);
+    </script>
+</body>
+</html>

@@ -40,11 +40,6 @@
             margin-top: 20px;
             font-size: 1.5rem;
         }
-
-        #timer {
-            font-size: 1.2rem;
-            margin-top: 10px;
-        }
     </style>
 </head>
 <body>
@@ -52,42 +47,69 @@
     <p>{{ game.descricao }}</p>
     <div id="hacking-game-container">
         <button id="clicker-button" class="clicker-button">Click!</button>
-        <div id="result">Clicks: <span id="click-count">0</span></div>
-        <div id="timer">Tempo restante: <span id="time">{{ configuracao.tempo_limite }}</span> segundos</div>
+        <div id="result">
+            <p>Clicks: <span id="click-count">0</span></p>
+            <p>Machine Clicks: <span id="machine-click-count">0</span></p>
+        </div>
     </div>
     <script>
         const configuracao = {{ configuracao|safe }};
         const clickerButton = document.getElementById('clicker-button');
         const clickCountDisplay = document.getElementById('click-count');
-        const timerDisplay = document.getElementById('time');
+        const machineClickCountDisplay = document.getElementById('machine-click-count');
+        const resultContainer = document.getElementById('result');
         let clickCount = 0;
-        let timeLeft = configuracao.tempo_limite;
-        let timer;
+        let machineClickCount = 0;
+        let machineClickRate;
+
+        // Definir a taxa de cliques da máquina com base na dificuldade
+        switch (configuracao.dificuldade) {
+            case 'fácil':
+                machineClickRate = 0.5; // 0.5 cliques por segundo
+                break;
+            case 'média':
+                machineClickRate = 1; // 1 clique por segundo
+                break;
+            case 'difícil':
+                machineClickRate = 2; // 2 cliques por segundo
+                break;
+            default:
+                machineClickRate = 1; // Padrão para dificuldade média
+        }
 
         clickerButton.addEventListener('click', () => {
             clickCount++;
             clickCountDisplay.textContent = clickCount;
+            checkVictory();
         });
 
-        function startTimer() {
-            timer = setInterval(() => {
-                timeLeft--;
-                timerDisplay.textContent = timeLeft;
-                if (timeLeft <= 0) {
-                    clearInterval(timer);
-                    endGame();
-                }
+        function startMachineClicks() {
+            setInterval(() => {
+                machineClickCount += machineClickRate;
+                machineClickCountDisplay.textContent = Math.floor(machineClickCount);
+                checkVictory();
             }, 1000);
         }
 
-        function endGame() {
+        function checkVictory() {
+            const targetClicks = configuracao.dificuldade === 'fácil' ? 20 : configuracao.dificuldade === 'média' ? 50 : configuracao.dificuldade === 'difícil' ? 100 : 50;
+            if (clickCount >= targetClicks) {
+                resultContainer.innerHTML = '<p>Você venceu!</p>';
+                postCompletion(true);
+            } else if (machineClickCount >= targetClicks) {
+                resultContainer.innerHTML = '<p>A máquina venceu!</p>';
+                postCompletion(false);
+            }
+        }
+
+        function postCompletion(playerWon) {
             fetch("{% url 'hacking_mini_game_view' game.id %}", {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': '{{ csrf_token }}'
                 },
-                body: JSON.stringify({ completed: true, clicks: clickCount })
+                body: JSON.stringify({ completed: playerWon, clicks: clickCount })
             })
             .then(response => response.json())
             .then(data => {
@@ -99,7 +121,7 @@
             });
         }
 
-        startTimer();
+        startMachineClicks();
     </script>
 </body>
 </html>

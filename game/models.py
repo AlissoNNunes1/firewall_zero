@@ -11,7 +11,14 @@ class HackingMiniGame(models.Model):
         ('stealth', 'Hacking para acessar o servidor central sem ser detectado'),
         ('complex', 'Hacking complexo com várias etapas, refletindo a escolha do jogador'),
         ('clicker', 'Hacking clicker, onde o jogador enfrenta a máquina para ver quem clica mais'),
-        ('random', 'Aleatório'),  # Novo tipo de mini-jogo
+        ('escape', 'Hacking para escapar de um sistema de segurança'),
+        ('random', 'Aleatório'),  
+        ('defense','Hacking para defender o ataque de python'), 
+        ('cerco', 'Hacking para cercar o python'),
+        ('furtivo', 'infiltração em um sistema protegido sem ser detectado pelas câmeras de segurança, coletando dados críticos e evitando armadilhas'),
+        ('final','Minigame final contra o Python'),
+        
+        
     ]
 
     name = models.CharField(max_length=100)

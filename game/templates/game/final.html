@@ -1,0 +1,262 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Confronto Final com Python</title>
+    <link rel="stylesheet" href="{% static 'global.css' %}">
+    <link rel="stylesheet" href="{% static 'hacking_mini_game.css' %}">
+    <style>
+        /* Estilos do container */
+        #battle-container {
+            width: 100%;
+            max-width: 1000px;
+            height: 700px;
+            margin: auto;
+            background-color: #111;a
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            position: relative;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+
+        /* Estilos do oponente */
+        .python-target {
+            width: 70px;
+            height: 70px;
+            background-color: red;
+            border-radius: 50%;
+            position: absolute;
+            cursor: pointer;
+            animation: moveTarget 3s linear infinite;
+        }
+
+        @keyframes moveTarget {
+            0% { left: 10%; top: 20%; }
+            25% { left: 70%; top: 20%; }
+            50% { left: 70%; top: 70%; }
+            75% { left: 10%; top: 70%; }
+            100% { left: 10%; top: 20%; }
+        }
+
+        /* Estilos dos ataques */
+        .python-attack {
+            width: 40px;
+            height: 40px;
+            background-color: yellow;
+            border-radius: 50%;
+            position: absolute;
+            animation: moveAttack 2s linear infinite;
+        }
+
+        @keyframes moveAttack {
+            0% { left: 50%; top: -10%; }
+            50% { left: 80%; top: 50%; }
+            100% { left: -10%; top: 80%; }
+        }
+
+        /* Estilos do HUD */
+        #hud {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            text-align: center;
+        }
+
+        #game-over {
+            display: none;
+            font-size: 1.5rem;
+            margin-top: 20px;
+            color: white;
+        }
+
+        #instructions {
+            background-color: #333;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        #instructions button {
+            background-color: #00aaff;
+            color: white;
+            padding: 10px 20px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        #instructions button:hover {
+            background-color: #007acc;
+        }
+
+        #restart-button {
+            display: none;
+            background-color: #ff0000;
+            color: white;
+            padding: 10px 20px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        #restart-button:hover {
+            background-color: #cc0000;
+        }
+    </style>
+</head>
+<body>
+    <h1>Confronto Final com Python</h1>
+    <div id="instructions">
+        <p>Instruções: Clique nos pontos vulneráveis (vermelhos) para derrotar Python. Evite os ataques (amarelos) que aparecem na tela!</p>
+        <button id="start-button">Começar Batalha</button>
+    </div>
+    <div id="battle-container" style="display: none;"></div>
+    <div id="hud">
+        <p>Vida de Python: <span id="python-health">100</span></p>
+        <p>Vida do Jogador: <span id="player-health">100</span></p>
+        <p>Tentativas Restantes: <span id="attempts">3</span></p>
+    </div>
+    <div id="game-over">Confronto Finalizado!</div>
+    <button id="restart-button" style="display: none;">Reiniciar Jogo</button>
+    <script>
+        const battleContainer = document.getElementById('battle-container');
+        const startButton = document.getElementById('start-button');
+        const instructions = document.getElementById('instructions');
+        const pythonHealthDisplay = document.getElementById('python-health');
+        const playerHealthDisplay = document.getElementById('player-health');
+        const gameOverDisplay = document.getElementById('game-over');
+        const restartButton = document.getElementById('restart-button');
+        const attemptsDisplay = document.getElementById('attempts');
+
+        let pythonHealth = 100;
+        let playerHealth = 100;
+        let attempts = 3;
+        let targetInterval;
+        let attackInterval;
+
+        function createPythonTarget() {
+            const target = document.createElement('div');
+            target.classList.add('python-target');
+            target.style.left = Math.random() * 80 + '%';
+            target.style.top = Math.random() * 80 + '%';
+            battleContainer.appendChild(target);
+
+            target.addEventListener('click', () => {
+                pythonHealth -= 10;
+                pythonHealthDisplay.textContent = pythonHealth;
+                battleContainer.removeChild(target);
+                checkVictory();
+            });
+
+            setTimeout(() => {
+                if (battleContainer.contains(target)) {
+                    battleContainer.removeChild(target);
+                }
+            }, 3000);
+        }
+
+        function createPythonAttack() {
+            const attack = document.createElement('div');
+            attack.classList.add('python-attack');
+            attack.style.left = Math.random() * 80 + '%';
+            attack.style.top = Math.random() * 80 + '%';
+            battleContainer.appendChild(attack);
+
+            attack.addEventListener('mouseover', () => {
+                playerHealth -= 10;
+                playerHealthDisplay.textContent = playerHealth;
+                battleContainer.removeChild(attack);
+                checkDefeat();
+            });
+
+            setTimeout(() => {
+                if (battleContainer.contains(attack)) {
+                    battleContainer.removeChild(attack);
+                }
+            }, 3000);
+        }
+
+        function checkVictory() {
+            if (pythonHealth <= 0) {
+                endGame(true);
+            }
+        }
+
+        function checkDefeat() {
+            if (playerHealth <= 0) {
+                attempts -= 1;
+                attemptsDisplay.textContent = attempts;
+                if (attempts > 0) {
+                    resetGame();
+                } else {
+                    endGame(false);
+                }
+            }
+        }
+
+        function endGame(playerWon) {
+            clearInterval(targetInterval);
+            clearInterval(attackInterval);
+            gameOverDisplay.style.display = 'block';
+            gameOverDisplay.textContent = playerWon ? 'Você venceu!' : 'Game Over!';
+            if (playerWon) {
+                postCompletion(true);
+            } else {
+                if (attempts > 0) {
+                    restartButton.style.display = 'block';
+                } else {
+                    window.location.href = "{% url 'lose' %}";
+                }
+            }
+        }
+
+        function postCompletion(playerWon) {
+            fetch("{% url 'hacking_mini_game_view' game.id %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ completed: playerWon })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.next_screen_url) {
+                    window.location.href = data.next_screen_url;
+                } else if (data.lose_url) {
+                    window.location.href = data.lose_url;
+                } else {
+                    alert(data.message);
+                }
+            });
+        }
+
+        function resetGame() {
+            pythonHealth = 100;
+            playerHealth = 100;
+            pythonHealthDisplay.textContent = pythonHealth;
+            playerHealthDisplay.textContent = playerHealth;
+            gameOverDisplay.style.display = 'none';
+            restartButton.style.display = 'none';
+            startGame();
+        }
+
+        function startGame() {
+            instructions.style.display = 'none';
+            battleContainer.style.display = 'block';
+
+            targetInterval = setInterval(createPythonTarget, 2000);
+            attackInterval = setInterval(createPythonAttack, 3000);
+        }
+
+        startButton.addEventListener('click', startGame);
+        restartButton.addEventListener('click', resetGame);
+    </script>
+</body>
+</html>

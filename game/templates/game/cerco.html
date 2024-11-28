@@ -1,0 +1,351 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Missão de Cerco</title>
+    <link rel="stylesheet" href="{% static 'global.css' %}">
+    <link rel="stylesheet" href="{% static 'hacking_mini_game.css' %}">
+    <style>
+        #cerco-game-container {
+            width: 90%;
+            max-width: 800px;
+            height: 600px;
+            margin: auto;
+            text-align: center;
+            background-color: #333;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ally {
+            width: 60px;
+            height: 60px;
+            background-color: blue;
+            color: white;
+            font-size: 0.8rem;
+            text-align: center;
+            line-height: 60px;
+            border-radius: 50%;
+            position: absolute;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .ally:hover {
+            transform: scale(1.2);
+            background-color: lightblue;
+        }
+
+        .enemy {
+            width: 50px;
+            height: 50px;
+            background-color: red;
+            border-radius: 50%;
+            position: absolute;
+            animation: moveEnemy 5s linear infinite;
+        }
+
+        @keyframes moveEnemy {
+            0% { left: 0; top: 0; }
+            25% { left: 80%; top: 0; }
+            50% { left: 80%; top: 80%; }
+            75% { left: 0; top: 80%; }
+            100% { left: 0; top: 0; }
+        }
+
+        .safe-zone {
+            width: 50px;
+            height: 50px;
+            background-color: green;
+            border-radius: 50%;
+            position: absolute;
+            cursor: pointer;
+        }
+
+        #score-board {
+            margin-top: 20px;
+            font-size: 1.2rem;
+        }
+
+        #game-over {
+            display: none;
+            font-size: 1.5rem;
+            color: #f00;
+            margin-top: 20px;
+        }
+
+        #instructions {
+            background-color: #333;
+            border-radius: 12px;
+            padding: 20px;
+            width: 80%;
+            max-width: 600px;
+            margin: auto;
+            color: white;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        #instructions p {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+        }
+
+        #instructions button {
+            background-color: #00aaff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+
+        #instructions button:hover {
+            background-color: #007acc;
+            transform: scale(1.1);
+        }
+
+        #restart-button {
+            display: none;
+            background-color: #00aaff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+
+        #restart-button:hover {
+            background-color: #007acc;
+            transform: scale(1.1);
+        }
+
+        h1 {
+            color: white;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+
+        p {
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        #status, #timer {
+            margin-top: 10px;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>Missão de Cerco</h1>
+    <p>Escolha entre um ataque coordenado ou uma infiltração estratégica para deter Python!</p>
+    <div id="instructions">
+        <p>Instruções: Clique nos aliados azuis para recrutá-los, nos inimigos vermelhos para derrotá-los e nas zonas seguras verdes para ganhar pontos extras. Não deixe os inimigos passarem!</p>
+        <button id="start-button">Começar</button>
+    </div>
+    <div id="cerco-game-container" style="display: none;"></div>
+    <div id="score-board">
+        <p>Score: <span id="score">0</span></p>
+        <p>Tempo Restante: <span id="time-left">30</span>s</p>
+        <p>Tentativas Restantes: <span id="attempts-left">3</span></p>
+    </div>
+    <div id="game-over">Missão Concluída!</div>
+    <button id="restart-button">Reiniciar</button>
+    <script>
+        const configuracao = {
+            dificuldade: 'média'  // Defina a dificuldade aqui ou obtenha-a de outra forma
+        };
+
+        const container = document.getElementById('cerco-game-container');
+        const scoreDisplay = document.getElementById('score');
+        const timeDisplay = document.getElementById('time-left');
+        const attemptsDisplay = document.getElementById('attempts-left');
+        const gameOverDisplay = document.getElementById('game-over');
+        const startButton = document.getElementById('start-button');
+        const instructions = document.getElementById('instructions');
+        const restartButton = document.getElementById('restart-button');
+
+        let score = 0;
+        let timeLeft = 30;
+        let attemptsLeft = 3;
+        let targetScore;
+        let allyInterval;
+        let enemyInterval;
+        let safeZoneInterval;
+
+        // Definir a pontuação alvo e a velocidade das ameaças com base na dificuldade
+        switch (configuracao.dificuldade) {
+            case 'fácil':
+                targetScore = 100;
+                allyInterval = 2000; // 2 segundos
+                enemyInterval = 3000; // 3 segundos
+                safeZoneInterval = 4000; // 4 segundos
+                break;
+            case 'média':
+                targetScore = 200;
+                allyInterval = 1500; // 1.5 segundos
+                enemyInterval = 2000; // 2 segundos
+                safeZoneInterval = 3000; // 3 segundos
+                break;
+            case 'difícil':
+                targetScore = 300;
+                allyInterval = 1000; // 1 segundo
+                enemyInterval = 1500; // 1.5 segundos
+                safeZoneInterval = 2000; // 2 segundos
+                break;
+            default:
+                targetScore = 200;
+                allyInterval = 1500; // 1.5 segundos
+                enemyInterval = 2000; // 2 segundos
+                safeZoneInterval = 3000; // 3 segundos
+        }
+
+        function createAlly() {
+            const ally = document.createElement('div');
+            ally.classList.add('ally');
+            ally.textContent = 'Ally';
+            ally.style.left = Math.random() * 80 + '%';
+            ally.style.top = Math.random() * 80 + '%';
+            container.appendChild(ally);
+
+            ally.addEventListener('click', () => {
+                score += 10;
+                scoreDisplay.textContent = score;
+                container.removeChild(ally);
+                checkVictory();
+            });
+
+            setTimeout(() => {
+                if (container.contains(ally)) {
+                    container.removeChild(ally);
+                }
+            }, 3000);
+        }
+
+        function createEnemy() {
+            const enemy = document.createElement('div');
+            enemy.classList.add('enemy');
+            enemy.style.left = Math.random() * 80 + '%';
+            enemy.style.top = Math.random() * 80 + '%';
+            container.appendChild(enemy);
+
+            setTimeout(() => {
+                if (container.contains(enemy)) {
+                    container.removeChild(enemy);
+                }
+            }, 3000);
+        }
+
+        function createSafeZone() {
+            const safeZone = document.createElement('div');
+            safeZone.classList.add('safe-zone');
+            safeZone.style.left = Math.random() * 80 + '%';
+            safeZone.style.top = Math.random() * 80 + '%';
+            container.appendChild(safeZone);
+
+            safeZone.addEventListener('click', () => {
+                score += 20;
+                scoreDisplay.textContent = score;
+                container.removeChild(safeZone);
+                checkVictory();
+            });
+
+            setTimeout(() => {
+                if (container.contains(safeZone)) {
+                    container.removeChild(safeZone);
+                }
+            }, 5000);
+        }
+
+        function countdown() {
+            const timer = setInterval(() => {
+                timeLeft -= 1;
+                timeDisplay.textContent = timeLeft;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    clearInterval(allyIntervalId);
+                    clearInterval(enemyIntervalId);
+                    clearInterval(safeZoneIntervalId);
+                    gameOverDisplay.style.display = 'block';
+                    gameOverDisplay.textContent = score >= targetScore ? 'Você venceu!' : 'Missão Concluída!';
+                    postCompletion(score >= targetScore);
+                }
+            }, 1000);
+        }
+
+        function checkVictory() {
+            if (score >= targetScore) {
+                clearInterval(allyIntervalId);
+                clearInterval(enemyIntervalId);
+                clearInterval(safeZoneIntervalId);
+                gameOverDisplay.style.display = 'block';
+                gameOverDisplay.textContent = 'Você venceu!';
+                postCompletion(true);
+            }
+        }
+
+        function postCompletion(playerWon) {
+            fetch("{% url 'hacking_mini_game_view' game.id %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ completed: playerWon, score: score })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.next_screen_url) {
+                    window.location.href = data.next_screen_url;
+                } else {
+                    alert(data.message);
+                }
+            });
+        }
+
+        function resetGame() {
+            clearInterval(allyIntervalId);
+            clearInterval(enemyIntervalId);
+            clearInterval(safeZoneIntervalId);
+            container.innerHTML = '';
+            score = 0;
+            timeLeft = 30;
+            scoreDisplay.textContent = score;
+            timeDisplay.textContent = timeLeft;
+            gameOverDisplay.style.display = 'none';
+            restartButton.style.display = 'none';
+            allyIntervalId = setInterval(createAlly, allyInterval);
+            enemyIntervalId = setInterval(createEnemy, enemyInterval);
+            safeZoneIntervalId = setInterval(createSafeZone, safeZoneInterval);
+            countdown();
+        }
+
+        startButton.addEventListener('click', () => {
+            instructions.style.display = 'none';
+            container.style.display = 'block';
+            resetGame();
+        });
+
+        restartButton.addEventListener('click', () => {
+            attemptsLeft--;
+            attemptsDisplay.textContent = attemptsLeft;
+            if (attemptsLeft <= 0) {
+                window.location.href = "{% url 'lose' %}";
+            } else {
+                resetGame();
+            }
+        });
+    </script>
+</body>
+</html>
