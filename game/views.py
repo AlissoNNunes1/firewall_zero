@@ -60,7 +60,7 @@ def hacking_mini_game_view(request, game_id):
             'game/hacking_mini_game_pattern.html',
             'game/hacking_mini_game_stealth.html',
             'game/hacking_mini_game_complex.html',
-            'game/hacking_mini_game_clicker.html'
+            'game/hacking_mini_game_clicker.html',
             'game/hacking_mini_game_escape.html',
             'game/defense.html',
             'game/cerco.html',

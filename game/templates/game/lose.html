@@ -36,6 +36,9 @@
 
     document.querySelector(".restart-button").addEventListener("click", function() {
         window.history.back();
+        setTimeout(function() {
+            window.location.reload();
+        }, 100); // Pequeno atraso para garantir que a navegação de volta ocorra antes do reload
     });
 </script>
 </html>
