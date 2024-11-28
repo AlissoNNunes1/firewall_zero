@@ -69,6 +69,14 @@
             text-align: center;
             margin-top: 20px;
         }
+        
+        #result p.success {
+            color: green;
+        }
+        
+        #result p.failure {
+            color: red;
+        }
 
         #attempts-container {
             text-align: center;
@@ -76,6 +84,19 @@
             font-size: 1rem;
             color: #ff9f1c;
             font-weight: bold;
+        }
+
+        #memorize-timer-container {
+            width: 100%;
+            background-color: #ddd;
+            margin-top: 10px;
+        }
+        
+        #memorize-timer-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #4caf50;
+            transition: width 0.5s;
         }
     </style>
 </head>
@@ -87,6 +108,9 @@
         <button id="start-button">Começar</button>
     </div>
     <div id="hacking-game-container" style='display:none;'>
+        <div id="memorize-timer-container">
+            <div id="memorize-timer-bar"></div>
+        </div>
         <div id="sequence-container">
             <p>Memorize a sequência:</p>
             <div id="sequence"></div>
@@ -108,31 +132,72 @@
         const sequenceContainer = document.getElementById('sequence');
         const buttons = document.querySelectorAll('.button');
         const resultContainer = document.getElementById('result');
-        const timerContainer = document.getElementById('time');
+        const timerContainer = document.getElementById('timer');
+        const timeSpan = document.getElementById('time');
         const startButton = document.getElementById('start-button');
         const restartButton = document.getElementById('restart-button');
         const hackingGameContainer = document.getElementById('hacking-game-container');
         const instructions = document.getElementById('instructions');
         const buttonsContainer = document.getElementById('buttons-container');
+        const memorizeTimerContainer = document.getElementById('memorize-timer-container');
+        const memorizeTimerBar = document.getElementById('memorize-timer-bar');
+        const attemptsContainer = document.getElementById('attempts-container');
+        const attemptsSpan = document.getElementById('attempts');
+        
         let sequence = [];
         let userSequence = [];
         let currentStep = 0;
         let timeLeft = configuracao.tempo_limite;
         let attempts = 3;
         let timer;
-
+        
+        function startMemorizeTimer() {
+            memorizeTimeLeft = 5;
+            memorizeTimerBar.style.width = '100%';
+            timer = setInterval(() => {
+                memorizeTimeLeft--;
+                memorizeTimerBar.style.width = (memorizeTimeLeft / 5) * 100 + '%';
+                if (memorizeTimeLeft < 0) {
+                    clearInterval(timer);
+                    startGameTimer();
+                }
+            }, 1000);
+        }
+        
+        function startGameTimer() {
+            timerContainer.style.display = 'block';
+            timeSpan.textContent = timeLeft;
+            sequenceContainer.innerHTML = sequence.map(() => '-').join(' ');
+            timer = setInterval(() => {
+                timeSpan.textContent = timeLeft;
+                buttonsContainer.style.display = 'block';
+                if (timeLeft <= 0) {
+                    timerContainer.style.display = 'none';
+                    resultContainer.innerHTML = '<p>Tempo esgotado. Tente novamente.</p>';
+                    stopTimer();
+                    attempts--
+                    if (attempts > 0) {
+                        restartButton.style.display = 'block';
+                        attemptsContainer.style.display = 'block';
+                        attemptsSpan.textContent = attempts;
+                    } else {
+                        resultContainer.innerHTML = '<p>Acabaram as tentativas. Você será redirecionado em 3 segundos...</p>';
+                        setTimeout(() => {
+                            window.location.href = "{% url 'lose' %}";
+                        }, 3000);
+                    }
+                }
+                timeLeft--;
+            }, 1000);
+        }
+        
         function generateSequence(dificuldade) {
             const length = dificuldade === 'fácil' ? 3 : dificuldade === 'média' ? 5 : dificuldade === 'difícil' ? 8 : 6;
             sequence = Array.from({ length }, () => Math.floor(Math.random() * 4) + 1);
             sequenceContainer.innerHTML = sequence.join(' ');
-            setTimeout(() => {
-                sequenceContainer.innerHTML = "";
-                for (let i = 0; i < sequence.length; i++) {
-                    sequenceContainer.innerHTML += "-"; 
-                }
-            }, 5000);
+            startMemorizeTimer();
         }
-
+        
         function checkSequence(value) {
             if (sequence[currentStep] === value) {
                 currentStep++;
@@ -143,23 +208,27 @@
                 sequenceContainer.innerHTML = displaySequence;
         
                 if (currentStep === sequence.length) {
-                    resultContainer.innerHTML = '<p>Você hackeou o sistema com sucesso!</p>';
+                    resultContainer.innerHTML = '<p class="success">Você hackeou o sistema com sucesso! Você será redirecionado em 3 segundos...</p>';
                     stopTimer();
-                    restartButton.style.display = 'block';
-                    postCompletion();
+                    setTimeout(() => {
+                        postCompletion();
+                    }, 3000);
                 }
             } else {
                 buttons[value - 1].classList.add('incorrect');
                 setTimeout(() => buttons[value - 1].classList.remove('incorrect'), 300);
                 resultContainer.innerHTML = '<p>Sequência incorreta. Tente novamente.</p>';
+                stopTimer();
                 attempts--;
-                document.getElementById('attempts').textContent = attempts;
+                attemptsSpan.textContent = attempts;
                 if (attempts > 0) {
-                    stopTimer();
                     restartButton.style.display = 'block';
-                    document.getElementById('attempts-container').style.display = 'block';
+                    attemptsContainer.style.display = 'block';
                 } else {
-                    window.location.href = "{% url 'lose' %}";
+                    resultContainer.innerHTML = '<p>Acabaram as tentativas. Você será redirecionado em 3 segundos...</p>';
+                    setTimeout(() => {
+                        window.location.href = "{% url 'lose' %}";
+                    }, 3000);
                 }
             }
         }
@@ -171,37 +240,17 @@
             generateSequence(configuracao.dificuldade);
             buttonsContainer.style.display = 'none';
             restartButton.style.display = 'none';
-            document.getElementById('attempts-container').style.display = 'none';
+            attemptsContainer.style.display = 'none';
             timeLeft = configuracao.tempo_limite;
-            timerContainer.textContent = timeLeft;
+            timeSpan.textContent = timeLeft;
             stopTimer();
-            startTimer();
+            startMemorizeTimer();
         }
-
-        function startTimer() {
-            timer = setInterval(() => {
-                timeLeft--;
-                timerContainer.textContent = timeLeft;
-                if (timeLeft === 25) {
-                    buttonsContainer.style.display = 'block';
-                }
-                if (timeLeft <= 0) {
-                    stopTimer();
-                    resultContainer.innerHTML = '<p>Tempo esgotado. Tente novamente.</p>';
-                    attempts--;
-                    if (attempts > 0) {
-                        restartButton.style.display = 'block';
-                    } else {
-                        window.location.href = "{% url 'lose' %}";
-                    }
-                }
-            }, 1000);
-        }
-
+        
         function stopTimer() {
             clearInterval(timer);
         }
-
+        
         function postCompletion() {
             fetch("{% url 'hacking_mini_game_view' game.id %}", {
                 method: 'POST',
@@ -220,22 +269,21 @@
                 }
             });
         }
-
+        
         buttons.forEach(button => {
             button.addEventListener('click', () => {
                 const value = parseInt(button.getAttribute('data-value'));
                 checkSequence(value);
             });
         });
-
+        
         startButton.addEventListener('click', () => {
             instructions.style.display = 'none';
             hackingGameContainer.style.display = 'block';
             generateSequence(configuracao.dificuldade);
-            timerContainer.textContent = timeLeft;
-            startTimer();
+            timeSpan.textContent = timeLeft;
         });
-
+        
         restartButton.addEventListener('click', resetGame);
     </script>
 </body>
