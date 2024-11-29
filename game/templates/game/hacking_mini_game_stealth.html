@@ -141,6 +141,17 @@
 
 
 
+            // Função para finalizar o jogo com a mensagem apropriada
+            function endGame(message) {
+                resultContainer.innerHTML = `<p style='color: red;'>${message}</p>`;
+                attemptsSpan.textContent = 0; // Definir tentativas restantes para 0
+
+                setTimeout(() => {
+                    resetGame(); // Reinicia o jogo
+                    window.location.href = "{% url 'lose' %}"; // Redireciona para a tela de derrota após 3 segundos
+                }, 3000);
+            }
+
             // Lidar com o clique nos botões
             function handleClick(button, number) {
                 userSteps.push(number);
@@ -157,9 +168,11 @@
                         clearInterval(timer); // Para o timer
                         timerContainer.style.display = "none"; // Oculta o timer
                         postCompletion(); // Envia o resultado ao servidor
+                        endGame("Você completou o hacking sem ser detectado! Avançando para a próxima fase...");
                     }
                 } else {
                     // Erro no passo
+                    toggleButtons(false);
                     button.style.backgroundColor = "red";
                     button.style.color = "white";
                     failSound.play();
@@ -174,10 +187,13 @@
                     if (attempts > 0) {
                         restartButton.style.display = 'block'; // Exibe o botão de reinício
                     } else {
-                        window.location.href = "{% url 'lose' %}"; // Redireciona para a tela de derrota
+                        // Chama a função endGame para finalizar com uma mensagem de derrota
+                        endGame("Infelizmente você foi detectado. Você será redirecionado em 3 segundos.");
                     }
                 }
             }
+
+
 
             // Reiniciar o jogo
             function resetGame() {
