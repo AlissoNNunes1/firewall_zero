@@ -203,6 +203,10 @@
         </div>
         <button id="restart-button" style="display: none;">Restart</button>
     </div>
+
+    <audio id="success-sound" src="{% static 'audio/success.wav' %}"></audio>
+    <audio id="fail-sound" src="{% static 'audio/fail.wav' %}"></audio>
+
     <script>
         const configuracao = {{ configuracao|safe }};
         const complexContainer = document.getElementById('complex');
@@ -222,6 +226,8 @@
         const inputContainer = document.getElementById('input-container');
         const userInput = document.getElementById('user-input');
         const submitButton = document.getElementById('submit-button');
+        const successSound = document.getElementById('success-sound');
+        const failSound = document.getElementById('fail-sound');
     
         let stages = [];
         let currentStage = 0;
@@ -330,9 +336,11 @@
                 currentStage++;
                 progressBar.style.width = `${(currentStage / stages.length) * 100}%`;
                 resultContainer.innerHTML = '<p class="stage-complete">Correto!</p>';
+                successSound.play();
                 loadStage();
             } else {
                 resultContainer.innerHTML = '<p class="stage-failed">Resposta incorreta. Tente novamente.</p>';
+                failSound.play();
                 attempts--;
                 if (attempts > 0) {
                     restartButton.style.display = 'block';

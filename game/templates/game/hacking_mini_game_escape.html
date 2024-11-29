@@ -102,6 +102,10 @@
     <p id="timer">Tempo Restante: <span id="time-left">60</span>s</p>
     <p>Tentativas Restantes: <span id="attempts-left">3</span></p>
     <button id="restart-button">Reiniciar</button>
+
+    <audio id="success-sound" src="{% static 'audio/success.wav' %}"></audio>
+    <audio id="fail-sound" src="{% static 'audio/fail.wav' %}"></audio>
+
     <script>
         const configuracao = {{ configuracao|safe }};
         const board = document.getElementById('game-board');
@@ -111,6 +115,8 @@
         const instructions = document.getElementById('instructions');
         const attemptsDisplay = document.getElementById('attempts-left');
         const restartButton = document.getElementById('restart-button');
+        const successSound = document.getElementById('success-sound');
+        const failSound = document.getElementById('fail-sound');
 
         let playerPosition = { x: 0, y: 0 };
         let dataPositions = [
@@ -162,6 +168,7 @@
                 if (pos.x === playerPosition.x && pos.y === playerPosition.y) {
                     collectedData++;
                     dataCountDisplay.textContent = collectedData;
+                    successSound.play();
                     return false;
                 }
                 return true;
@@ -171,6 +178,7 @@
             if (patrolPositions.some(pos => pos.x === playerPosition.x && pos.y === playerPosition.y)) {
                 attemptsLeft--;
                 attemptsDisplay.textContent = attemptsLeft;
+                failSound.play();
                 if (attemptsLeft <= 0) {
                     window.location.href = "{% url 'lose' %}";
                 } else {
