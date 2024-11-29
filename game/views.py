@@ -11,6 +11,26 @@ from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_POST
 from django.contrib.sessions.models import Session
 
+def get_media_urls():
+    media_urls = []
+    if hasattr(settings, 'MEDIA_ROOT') and settings.MEDIA_ROOT:
+        for root, dirs, files in os.walk(settings.MEDIA_ROOT):
+            for file in files:
+                media_urls.append(os.path.join(settings.MEDIA_URL, os.path.relpath(os.path.join(root, file), settings.MEDIA_ROOT)).replace('\\', '/'))
+    return media_urls
+
+def get_static_urls():
+    static_urls = []
+    if hasattr(settings, 'STATICFILES_DIRS') and settings.STATICFILES_DIRS:
+        for root, dirs, files in os.walk(settings.STATICFILES_DIRS[0]):
+            for file in files:
+                static_urls.append(os.path.join(settings.STATIC_URL, os.path.relpath(os.path.join(root, file), settings.STATICFILES_DIRS[0])).replace('\\', '/'))
+    return static_urls
+
+def get_audio_urls(media_urls):
+    audio_urls = [url for url in media_urls if url.endswith('.mp3') or url.endswith('.wav')]
+    return audio_urls
+
 def get_user_progress(request):
     if request.user.is_authenticated:
         user_progress, created = UserProgress.objects.get_or_create(user=request.user)
@@ -88,12 +108,20 @@ def home_view(request):
     chapters = Chapter.objects.all()
     screens = Screen.objects.all()
     
+    # Coletar URLs de mídia e estáticos
+    media_urls = get_media_urls()
+    static_urls = get_static_urls()
+    audio_urls = get_audio_urls(media_urls)
+    
     return render(request, 'game/home.html', {
         'first_screen': first_screen,
         'current_url': current_url,
         'characters': characters,
         'chapters': chapters,
         'screens': screens,
+        'media_urls': media_urls,
+        'static_urls': static_urls,
+        'audio_urls': audio_urls,
     })
 
 def chapter_view(request, chapter_num):
