@@ -1,169 +1,269 @@
 {% load static %}
 <!DOCTYPE html>
 <html>
-<head>
-    <title>{{ game.name }}</title>
-    <link rel="stylesheet" href="{% static 'global.css' %}">
-    <link rel="stylesheet" href="{% static 'hacking_mini_game.css' %}">
-</head>
-<body>
-    <h1 id="name">{{ game.name }}</h1>
-    <p id="desc">{{ game.descricao }}</p>
+    <head>
+        <title>{{ game.name }}</title>
+        <link rel="stylesheet" href="{% static 'global.css' %}" />
+        <link rel="stylesheet" href="{% static 'hacking_mini_game.css' %}" />
+        <style>
+            #restart-button {
+                display: block;
+                margin: 20px auto;
+                padding: 10px 20px;
+                background-color: #007bff;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                font-size: 1rem;
+                cursor: pointer;
+                transition: background-color 0.3s;
+            }
 
-    <div id="instructions">
-        <p>Instruções: Memorize a sequência e clique nos botões na ordem correta sem ser detectado.</p>
-        <button id="start-button">Começar</button>
-    </div>
+            #restart-button:hover {
+                background-color: #0056b3;
+            }
 
-    <div id="hacking-game-container" style="display: none;">
-        <div id="sequence-preview">
-            Memorize a sequência: <span id="sequence-display"></span>
+            #attempts-container {
+                text-align: center;
+                margin-top: 10px;
+                font-size: 1rem;
+                color: #ff9f1c;
+                font-weight: bold;
+            }
+        </style>
+    </head>
+    <body>
+        <h1 id="name">{{ game.name }}</h1>
+        <p id="desc">{{ game.descricao }}</p>
+
+        <div id="instructions">
+            <p>
+                Instruções: Memorize a sequência e clique nos botões na ordem
+                correta sem ser detectado.
+            </p>
+            <button id="start-button">Começar</button>
         </div>
-        <div id="stealth-container">
-            <p>Clique na sequência correta sem ser detectado:</p>
-            <div id="button-grid"></div>
+
+        <div id="hacking-game-container" style="display: none">
+            <div id="sequence-preview">
+                Memorize a sequência: <span id="sequence-display"></span>
+            </div>
+            <div id="stealth-container">
+                <p>Clique na sequência correta sem ser detectado:</p>
+                <div id="button-grid"></div>
+            </div>
+            <div id="result"></div>
+            <div id="timer">
+                Tempo restante:
+                <span id="time">{{ configuracao.tempo_limite }}</span> segundos
+            </div>
+            <div id="attempts-container" style="display: none">
+                Tentativas restantes: <span id="attempts"></span>
+            </div>
+            <button id="restart-button" style="display: none">Restart</button>
         </div>
-        <div id="result"></div>
-        <div id="timer">Tempo restante: <span id="time">{{ configuracao.tempo_limite }}</span> segundos</div>
-        <button id="restart-button" style="display: none;">Restart</button>
-    </div>
 
     <audio id="success-sound" src="{% static 'audio/success.wav' %}"></audio>
     <audio id="fail-sound" src="{% static 'audio/fail.wav' %}"></audio>
 
-    <script>
-        const configuracao = {{ configuracao|safe }};
-        const stealthContainer = document.getElementById("button-grid");
-        const sequenceDisplay = document.getElementById("sequence-display");
-        const resultContainer = document.getElementById("result");
-        const timerContainer = document.getElementById("time");
-        const successSound = document.getElementById("success-sound");
-        const failSound = document.getElementById("fail-sound");
-        const startButton = document.getElementById("start-button");
-        const restartButton = document.getElementById("restart-button");
-        const hackingGameContainer = document.getElementById("hacking-game-container");
-        const instructions = document.getElementById("instructions");
+        <script>
+            const configuracao = {{ configuracao|safe }};
+            const stealthContainer = document.getElementById("button-grid");
+            const sequenceDisplay = document.getElementById("sequence-display");
+            const resultContainer = document.getElementById("result");
+            const timeContainer = document.getElementById("time");
+            const timerContainer = document.getElementById("timer");
+            const successSound = document.getElementById("success-sound");
+            const failSound = document.getElementById("fail-sound");
+            const startButton = document.getElementById("start-button");
+            const restartButton = document.getElementById("restart-button");
+            const hackingGameContainer = document.getElementById("hacking-game-container");
+            const instructions = document.getElementById("instructions");
+            const attemptsContainer = document.getElementById('attempts-container');
+            const attemptsSpan = document.getElementById('attempts');
 
-        let steps = [];
-        let userSteps = [];
-        let currentStep = 0;
-        let timeLeft = configuracao.tempo_limite;
-        let attempts = 2;
-        let timer;
+            let steps = [];
+            let userSteps = [];
+            let currentStep = 0;
+            let timeLeft = configuracao.tempo_limite;
+            let attempts = 2;
+            let timer;
 
-        // Gerar passos aleatórios
-        function generateSteps(dificuldade) {
-            const length = dificuldade === "fácil" ? 3 : dificuldade === "média" ? 5 : dificuldade === "difícil" ? 8 : 6;
-            steps = Array.from({ length }, () => Math.floor(Math.random() * 10));
-            sequenceDisplay.innerText = steps.join(" ");
-            setTimeout(() => sequenceDisplay.innerText = "???", 4000); // Esconde após 3 segundos
-        }
+            // Gerar passos aleatórios
+            function generateSteps(dificuldade) {
+                const length = dificuldade === "fácil" ? 3 : dificuldade === "média" ? 5 : dificuldade === "difícil" ? 8 : 6;
+                steps = Array.from({ length }, () => Math.floor(Math.random() * 10));
+                sequenceDisplay.innerText = steps.join(" ");
 
-        // Criar botões dinâmicos
-        function createButtons() {
-            stealthContainer.innerHTML = ""; // Limpa o grid anterior
-            const buttons = Array.from({ length: 10 }, (_, i) => i);
-            shuffleArray(buttons).forEach(number => {
-                const button = document.createElement("button");
-                button.className = "button";
-                button.textContent = number;
-                button.onclick = () => handleClick(number);
-                stealthContainer.appendChild(button);
-            });
-        }
+                // Desativa os botões enquanto a sequência está visível
+                toggleButtons(false);
 
-        // Embaralhar um array
-        function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
+                setTimeout(() => {
+                    sequenceDisplay.innerText = "???"; // Esconde a sequência após 3 segundos
+                    toggleButtons(true); // Habilita os botões
+                    startTimer(); // Inicia o timer
+                }, 4000);
             }
-            return array;
-        }
 
-        // Lidar com o clique nos botões
-        function handleClick(number) {
-            userSteps.push(number);
-            if (userSteps[currentStep] === steps[currentStep]) {
-                currentStep++;
-                successSound.play();
-                if (currentStep === steps.length) {
-                    resultContainer.innerHTML = "<p>Você completou o hacking sem ser detectado!</p>";
-                    clearInterval(timer);
-                    postCompletion();
-                }
-            } else {
-                failSound.play();
-                resultContainer.innerHTML = "<p>Você foi detectado. Tente novamente.</p>";
-                attempts--;
-                if (attempts > 0) {
-                    restartButton.style.display = 'block';
-                } else {
-                    window.location.href = "{% url 'lose' %}";
-                }
+            // Criar botões dinâmicos
+            function createButtons() {
+                stealthContainer.innerHTML = ""; // Limpa o grid anterior
+                const buttons = Array.from({ length: 10 }, (_, i) => i);
+                shuffleArray(buttons).forEach(number => {
+                    const button = document.createElement("button");
+                    button.className = "button";
+                    button.textContent = number;
+                    button.onclick = () => handleClick(button, number);
+                    button.disabled = true; // Inicialmente desabilitado
+                    stealthContainer.appendChild(button);
+                });
             }
-        }
 
-        // Reiniciar o jogo
-        function resetGame() {
-            userSteps = [];
-            currentStep = 0;
-            resultContainer.innerHTML = '';
-            timeLeft = configuracao.tempo_limite;
-            generateSteps(configuracao.dificuldade);
-            createButtons();
-            startTimer();
-            restartButton.style.display = 'none';
-        }
+            // Habilitar ou desabilitar os botões
+            function toggleButtons(enable) {
+                const buttons = stealthContainer.querySelectorAll(".button");
+                buttons.forEach(button => {
+                    button.disabled = !enable;
+                });
+            }
 
-        // Enviar resultado ao servidor
-        function postCompletion() {
-            fetch("{% url 'hacking_mini_game_view' game.id %}", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": "{{ csrf_token }}"
-                },
-                body: JSON.stringify({ completed: true })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.next_screen_url) {
-                    window.location.href = data.next_screen_url;
-                } else {
-                    alert(data.message);
+            // Embaralhar um array
+            function shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
                 }
-            });
-        }
+                return array;
+            }
 
-        // Timer
-        function startTimer() {
-            timer = setInterval(() => {
-                timeLeft--;
-                timerContainer.textContent = timeLeft;
-                if (timeLeft <= 0) {
-                    clearInterval(timer);
-                    resultContainer.innerHTML = "<p>Tempo esgotado. Tente novamente.</p>";
+
+
+            // Função para finalizar o jogo com a mensagem apropriada
+            function endGame(message) {
+                resultContainer.innerHTML = `<p style='color: red;'>${message}</p>`;
+                attemptsSpan.textContent = 0; // Definir tentativas restantes para 0
+
+                setTimeout(() => {
+                    resetGame(); // Reinicia o jogo
+                    window.location.href = "{% url 'lose' %}"; // Redireciona para a tela de derrota após 3 segundos
+                }, 3000);
+            }
+
+            // Lidar com o clique nos botões
+            function handleClick(button, number) {
+                userSteps.push(number);
+
+                if (userSteps[currentStep] === steps[currentStep]) {
+                    // Passo correto
+                    button.style.backgroundColor = "green";
+                    button.style.color = "white";
+                    currentStep++;
+                    successSound.play();
+
+                    if (currentStep === steps.length) {
+                        resultContainer.innerHTML = "<p>Você completou o hacking sem ser detectado!</p>";
+                        clearInterval(timer); // Para o timer
+                        timerContainer.style.display = "none"; // Oculta o timer
+                        postCompletion(); // Envia o resultado ao servidor
+                        endGame("Você completou o hacking sem ser detectado! Avançando para a próxima fase...");
+                    }
+                } else {
+                    // Erro no passo
+                    toggleButtons(false);
+                    button.style.backgroundColor = "red";
+                    button.style.color = "white";
+                    failSound.play();
+                    clearInterval(timer); // Para o timer
+                    timerContainer.style.display = "none"; // Oculta o timer
+                    resultContainer.innerHTML = "<p style='color: red;'>Você foi detectado. Tente novamente.</p>";
+
                     attempts--;
+                    attemptsSpan.textContent = attempts; // Atualiza as tentativas restantes
+                    attemptsContainer.style.display = "block"; // Exibe as tentativas restantes
+
                     if (attempts > 0) {
-                        restartButton.style.display = 'block';
+                        restartButton.style.display = 'block'; // Exibe o botão de reinício
                     } else {
-                        window.location.href = "{% url 'lose' %}";
+                        // Chama a função endGame para finalizar com uma mensagem de derrota
+                        endGame("Infelizmente você foi detectado. Você será redirecionado em 3 segundos.");
                     }
                 }
-            }, 1000);
-        }
+            }
 
-        // Iniciar o jogo
-        startButton.addEventListener('click', () => {
-            instructions.style.display = 'none';
-            hackingGameContainer.style.display = 'block';
-            generateSteps(configuracao.dificuldade);
-            createButtons();
-            startTimer();
-        });
 
-        restartButton.addEventListener('click', resetGame);
-    </script>
-</body>
+
+            // Reiniciar o jogo
+            function resetGame() {
+                userSteps = [];
+                currentStep = 0;
+                timeLeft = configuracao.tempo_limite; // Reseta o tempo restante
+                resultContainer.innerHTML = ''; // Limpa a mensagem de resultado
+                generateSteps(configuracao.dificuldade); // Gera nova sequência
+                createButtons(); // Cria os botões
+
+                // Configuração visual
+                timerContainer.style.display = "block"; // Exibe o timer novamente
+                timerContainer.style.color = "white";
+                timeContainer.textContent = timeLeft; // Atualiza o tempo restante
+                restartButton.style.display = 'none'; // Esconde o botão de reinício
+                attemptsContainer.style.display = 'none'; // Esconde as tentativas
+            }
+
+            // Enviar resultado ao servidor
+            function postCompletion() {
+                fetch("{% url 'hacking_mini_game_view' game.id %}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": "{{ csrf_token }}"
+                    },
+                    body: JSON.stringify({ completed: true })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.next_screen_url) {
+                        window.location.href = data.next_screen_url;
+                    } else {
+                        alert(data.message);
+                    }
+                });
+            }
+
+            // Timer
+            function startTimer() {
+                timerContainer.style.color = "green";
+                timer = setInterval(() => {
+                    timeLeft--;
+                    timeContainer.textContent = timeLeft; // Atualiza o tempo restante
+
+                    if (timeLeft <= 0) {
+                        clearInterval(timer); // Para o timer
+                        timerContainer.style.display = "none"; // Oculta o timer
+                        resultContainer.innerHTML = "<p style='color: red;'>Tempo esgotado. Tente novamente.</p>";
+
+                        attempts--;
+                        attemptsSpan.textContent = attempts; // Atualiza as tentativas restantes
+                        attemptsContainer.style.display = "block"; // Exibe as tentativas restantes
+
+                        if (attempts > 0) {
+                            restartButton.style.display = 'block'; // Exibe o botão de reinício
+                        } else {
+                            window.location.href = "{% url 'lose' %}"; // Redireciona para a tela de derrota
+                        }
+                    }
+                }, 1000);
+            }
+
+            // Iniciar o jogo
+            startButton.addEventListener('click', () => {
+                instructions.style.display = 'none';
+                hackingGameContainer.style.display = 'block';
+                generateSteps(configuracao.dificuldade); // Gera a sequência
+                createButtons(); // Cria os botões (desativados inicialmente)
+            });
+
+            // Evento de reinício
+            restartButton.addEventListener('click', resetGame);
+        </script>
+    </body>
 </html>
