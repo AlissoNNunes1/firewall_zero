@@ -107,6 +107,18 @@
             background-color: rgba(0, 0, 0, 0.5);
             z-index: 999;
         }
+        .volume-control {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            align-items: center;
+            color: white;
+        }
+
+        .volume-control input[type="range"] {
+            margin-left: 10px;
+        }
     </style>
 </head>
 <body class="screen_background">
@@ -114,9 +126,14 @@
         <source src="{{ screen.chapter.trilha_sonora.url }}" type="audio/mpeg">
         Seu navegador não suporta o elemento de áudio.
     </audio>
+    <audio id="click-sound" src="{% static 'audio/click.mp3' %}"></audio>
     <a href="#" class="back-to-home-icon" onclick="showPopup(event)">
         <i class="fas fa-home"></i>
     </a>
+    <div class="volume-control">
+        <label for="volume-slider">Volume:</label>
+        <input type="range" id="volume-slider" min="0" max="1" step="0.01">
+    </div>
     <h1 class="screen_title">
         <span class="screen_description">{{ screen.title }}</span>
     </h1>
@@ -130,7 +147,7 @@
             {% if choice.next_screen %}
                 <li class="screen_answer_item">
                     <a class="screen_answer_link" href="{% url 'screen_view' choice.next_screen.chapter.num choice.next_screen.num %}"
-                       onclick="storeMusicState()">
+                       onclick="playClickSound(); storeMusicState()">
                         {{ choice.text }}
                     </a>
                     <form id="update-progress-form-{{ choice.next_screen.num }}" method="post" action="{% url 'update_progress' %}" style="display: none;">
@@ -142,7 +159,7 @@
             {% elif choice.hacking_mini_game %}
                 <li class="screen_answer_item">
                     <a class="screen_answer_link" href="{% url 'hacking_mini_game_view' choice.hacking_mini_game.id %}"
-                       onclick="storeMusicState()">
+                       onclick="playClickSound(); storeMusicState()">
                         {{ choice.text }}
                     </a>
                 </li>
@@ -253,16 +270,31 @@
             localStorage.setItem('isPlaying', !audio.paused);
         }
 
+        function playClickSound() {
+            const clickSound = document.getElementById('click-sound');
+            clickSound.play();
+        }
+
         window.addEventListener('load', function() {
             const audio = document.getElementById('trilha-sonora');
+            const volumeSlider = document.getElementById('volume-slider');
             const storedTime = localStorage.getItem('musicTime');
             const isPlaying = localStorage.getItem('isPlaying') === 'true';
+            const storedVolume = localStorage.getItem('volume') || 0.5;
+
             if (storedTime) {
                 audio.currentTime = storedTime;
             }
             if (isPlaying) {
                 audio.play();
             }
+            audio.volume = storedVolume;
+            volumeSlider.value = storedVolume;
+
+            volumeSlider.addEventListener('input', function() {
+                audio.volume = this.value;
+                localStorage.setItem('volume', this.value);
+            });
         });
     </script>
 </body>
