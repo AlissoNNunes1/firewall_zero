@@ -9,7 +9,6 @@
     <style>
         {{ screen.custom_css|safe }}
         .back-to-home-icon {
-            position: absolute;
             top: 16px;
             left: 75%;
             translate: -50%;
@@ -107,18 +106,55 @@
             background-color: rgba(0, 0, 0, 0.5);
             z-index: 999;
         }
-        .volume-control {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            display: flex;
-            align-items: center;
-            color: white;
-        }
 
-        .volume-control input[type="range"] {
-            margin-left: 10px;
-        }
+    .volume-control {
+        top: 18px;
+        left: 78%;
+        display: flex;
+        align-items: center;
+        color: white;
+        background-color: #e27318;
+        padding: 10px;
+        border-radius: 5px;
+        flex-direction: column;
+        font-weight: 900;
+    }
+
+    .volume-control input[type="range"] {
+        width: 240px;
+        height: 8px;
+        background: #cd5219;
+        outline: none;
+        opacity: 0.7;
+        transition: opacity 0.2s;
+        margin-left: 10px;
+        padding: 0;
+    }
+
+    .volume-control input[type="range"]:hover {
+        opacity: 1;
+    }
+
+    .volume-control input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        background: #e27318;
+        cursor: pointer;
+        border-radius: 50%;
+        border: 2px solid #fff;
+    }
+
+    .volume-control input[type="range"]::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        background: #e27318;
+        cursor: pointer;
+        border-radius: 50%;
+        border: 2px solid #fff;
+    }
+
     </style>
 </head>
 <body class="screen_background">
@@ -127,13 +163,20 @@
         Seu navegador não suporta o elemento de áudio.
     </audio>
     <audio id="click-sound" src="{% static 'audio/click.mp3' %}"></audio>
-    <a href="#" class="back-to-home-icon" onclick="showPopup(event)">
-        <i class="fas fa-home"></i>
-    </a>
-    <div class="volume-control">
-        <label for="volume-slider">Volume:</label>
-        <input type="range" id="volume-slider" min="0" max="1" step="0.01">
+    
+    <div style="display: flex; position: absolute; top: 16px; left: 75%;">
+        <a href="#" class="back-to-home-icon" onclick="showPopup(event)">
+            <i class="fas fa-home"></i>
+        </a>
+        <div class="volume-control">
+            <div>
+                <label for="volume-slider">Volume</label>
+                <span id="volume-percentage"></span>
+            </div>
+            <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="1">
+        </div>
     </div>
+
     <h1 class="screen_title">
         <span class="screen_description">{{ screen.title }}</span>
     </h1>
@@ -281,6 +324,7 @@
             const storedTime = localStorage.getItem('musicTime');
             const isPlaying = localStorage.getItem('isPlaying') === 'true';
             const storedVolume = localStorage.getItem('volume') || 0.5;
+            const volumePercentage = document.getElementById('volume-percentage');
 
             if (storedTime) {
                 audio.currentTime = storedTime;
@@ -290,10 +334,12 @@
             }
             audio.volume = storedVolume;
             volumeSlider.value = storedVolume;
+            volumePercentage.textContent = `${Math.round(volumeSlider.value * 100)}%`;
 
             volumeSlider.addEventListener('input', function() {
                 audio.volume = this.value;
                 localStorage.setItem('volume', this.value);
+                volumePercentage.textContent = `${Math.round(volumeSlider.value * 100)}%`;
             });
         });
     </script>
