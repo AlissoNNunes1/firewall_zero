@@ -1,108 +1,218 @@
 {% load static %}
 <!DOCTYPE html>
 <html>
-<head>
-    <title>{{ game.name }}</title>
-    <link rel="stylesheet" href="{% static 'global.css' %}">
-    <link rel="stylesheet" href="{% static 'hacking_mini_game.css' %}">
-</head>
-<body>
-    <h1 id="name">{{ game.name }}</h1>
-    <p id="desc">{{ game.descricao }}</p>
+    <head>
+        <title>{{ game.name }}</title>
+        <link rel="stylesheet" href="{% static 'global.css' %}" />
+        <link rel="stylesheet" href="{% static 'hacking_mini_game.css' %}" />
 
-    <div id="instructions">
-        <p>Instruções: Memorize o padrão oculto e digite os números na sequência correta.</p>
-        <button id="start-button">Começar</button>
-    </div>
-
-    <div id="hacking-game-container" style="display: none;">
-        <div id="pattern-container">
-            <p>Memorize o padrão oculto:</p>
-            <div id="pattern"></div>
-        </div>
-        <div id="input-container">
-            <p>Digite os números na sequência correta:</p>
-            <input type="text" id="user-input" placeholder="Digite aqui..." />
-            <button id="submit-btn">Confirmar</button>
-        </div>
-        <div id="result"></div>
-        <div id="timer">Tempo restante: <span id="time">{{ configuracao.tempo_limite }}</span> segundos</div>
-        <button id="restart-button" style="display: none;">Restart</button>
-    </div>
-
-    <script>
-        const configuracao = {{ configuracao|safe }};
-        const patternContainer = document.getElementById("pattern");
-        const userInput = document.getElementById("user-input");
-        const submitBtn = document.getElementById("submit-btn");
-        const resultContainer = document.getElementById("result");
-        const timerContainer = document.getElementById("time");
-        const startButton = document.getElementById("start-button");
-        const restartButton = document.getElementById("restart-button");
-        const hackingGameContainer = document.getElementById("hacking-game-container");
-        const instructions = document.getElementById("instructions");
-
-        let pattern = [];
-        let timeLeft = configuracao.tempo_limite;
-        let isPatternVisible = true;
-        let attempts = 2;
-        let timer;
-
-        // Gerar padrão aleatório com base na dificuldade
-        function generatePattern(dificuldade) {
-            const length = dificuldade === "fácil" ? 3 : dificuldade === "média" ? 5 : dificuldade === "difícil" ? 7 : 4;
-            pattern = Array.from({ length }, () => Math.floor(Math.random() * 10));
-            showPattern();
-        }
-
-        // Exibir padrão temporariamente
-        function showPattern() {
-            patternContainer.textContent = pattern.join(" ");
-            isPatternVisible = true;
-            setTimeout(() => {
-                patternContainer.textContent = "???";
-                isPatternVisible = false;
-            }, 4000);
-        }
-
-        // Verificar entrada do usuário
-        submitBtn.addEventListener("click", () => {
-            if (isPatternVisible) {
-                resultContainer.innerHTML = "<p>Espere o padrão desaparecer!</p>";
-                return;
+        <style>
+            #user-input {
+                border: 2px solid #5f675f;
+                border-radius: 0.5rem;
+                padding: 1rem;
+                background-color: #444;
+                margin-top: 10px;
+            }
+            #submit-btn {
+                border: 2px solid #5f675f;
+                border-radius: 0.5rem;
+                padding: 1rem;
+                background-color: #444;
+                color: #5f675f;
+                cursor: pointer;
             }
 
-            const userGuess = userInput.value.split("").map(Number);
-            if (arraysEqual(userGuess, pattern)) {
-                resultContainer.innerHTML = "<p style='color: #00ff88;'>Você identificou o padrão com sucesso!</p>";
-                clearInterval(timer);
-                postCompletion();
-            } else {
+            .openInputs {
+                border: 2px solid #999 !important;
+                color: #00ff00 !important;
+                background-color: #666 !important;
+            }
+
+            .openInputs::placeholder {
+                color: #00ff00 !important;
+            }
+
+            .openInputs:hover {
+                background-color: #5f675f !important;
+            }
+
+            #restart-button {
+                display: block;
+                margin: 20px auto;
+                padding: 10px 20px;
+                background-color: #007bff;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                font-size: 1rem;
+                cursor: pointer;
+                transition: background-color 0.3s;
+            }
+
+            #restart-button:hover {
+                background-color: #0056b3;
+            }
+
+            #attempts-container {
+                text-align: center;
+                margin-top: 10px;
+                font-size: 1rem;
+                color: #ff9f1c;
+                font-weight: bold;
+            }
+        </style>
+    </head>
+    <body>
+        <h1 id="name">{{ game.name }}</h1>
+        <p id="desc">{{ game.descricao }}</p>
+
+        <div id="instructions">
+            <p>
+                Instruções: Memorize o padrão oculto e digite os números na
+                sequência correta.
+            </p>
+            <button id="start-button">Começar</button>
+        </div>
+
+        <div id="hacking-game-container" style="display: none">
+            <div id="pattern-container">
+                <p>Memorize o padrão oculto:</p>
+                <div id="pattern"></div>
+            </div>
+            <div id="input-container">
+                <p>Digite os números na sequência correta:</p>
+                <input
+                    type="text"
+                    id="user-input"
+                    placeholder="Digite aqui..."
+                />
+                <button id="submit-btn">Confirmar</button>
+            </div>
+            <div id="result"></div>
+            <div id="timer">
+                Tempo restante:
+                <span id="time">{{ configuracao.tempo_limite }}</span> segundos
+            </div>
+            <div id="attempts-container" style="display: none">
+                Tentativas restantes: <span id="attempts"></span>
+            </div>
+            <button id="restart-button" style="display: none">Restart</button>
+        </div>
+
+        <script>
+                        // Configuração inicial
+            const configuracao = {{ configuracao|safe }};
+            const patternContainer = document.getElementById("pattern");
+            const userInput = document.getElementById("user-input");
+            const submitBtn = document.getElementById("submit-btn");
+            const resultContainer = document.getElementById("result");
+            const timeContainer = document.getElementById("time");
+            const timerContainer = document.getElementById("timer");
+            const startButton = document.getElementById("start-button");
+            const restartButton = document.getElementById("restart-button");
+            const hackingGameContainer = document.getElementById("hacking-game-container");
+            const instructions = document.getElementById("instructions");
+            const attemptsContainer = document.getElementById('attempts-container');
+            const attemptsSpan = document.getElementById('attempts');
+
+            let pattern = [];
+            let timeLeft = configuracao.tempo_limite;
+            let isPatternVisible = true;
+            let attempts = 3;
+            let timer;
+
+            // Gerar padrão aleatório com base na dificuldade
+            function generatePattern(dificuldade) {
+                const length = dificuldade === "fácil" ? 3 :
+                               dificuldade === "média" ? 5 :
+                               dificuldade === "difícil" ? 7 : 4;
+                pattern = Array.from({ length }, () => Math.floor(Math.random() * 10));
+                showPattern();
+            }
+
+            // Exibir padrão temporariamente
+            function showPattern() {
+                patternContainer.textContent = pattern.join(" ");
+                isPatternVisible = true;
+                toggleInput(false);
+
+                setTimeout(() => {
+                    patternContainer.textContent = "???";
+                    isPatternVisible = false;
+                    toggleInput(true);
+                    startTimer();
+                }, 4000);
+            }
+
+            // Bloquear ou desbloquear inputs
+            function toggleInput(enabled) {
+                userInput.disabled = !enabled;
+                submitBtn.disabled = !enabled;
+
+                if (enabled) {
+                    userInput.classList.add('openInputs');
+                    submitBtn.classList.add('openInputs');
+                } else {
+                    userInput.classList.remove('openInputs');
+                    submitBtn.classList.remove('openInputs');
+                }
+            }
+
+            // Verificar entrada do usuário
+            function checkUserInput() {
+                if (isPatternVisible) {
+                    resultContainer.innerHTML = "<p>Espere o padrão desaparecer!</p>";
+                    return;
+                }
+
+                const userGuess = userInput.value.split("").map(Number);
+                if (arraysEqual(userGuess, pattern)) {
+                    resultContainer.innerHTML = "<p style='color: #00ff88;'>Você identificou o padrão com sucesso!</p>";
+                    resetTimer();
+                    postCompletion();
+                } else {
+                    handleIncorrectGuess();
+                }
+            }
+
+            // Lidar com palpites incorretos
+            function handleIncorrectGuess() {
                 resultContainer.innerHTML = "<p style='color: red;'>Padrão incorreto. Tente novamente.</p>";
                 attempts--;
+                updateAttemptsDisplay();
+
                 if (attempts > 0) {
                     restartButton.style.display = 'block';
                 } else {
-                    window.location.href = "{% url 'lose' %}";
+                    endGame("Acabaram as tentativas. Você será redirecionado em 3 segundos...");
                 }
+
+                resetTimer();
+                toggleInput(false);
             }
-        });
 
-        // Comparar dois arrays
-        function arraysEqual(a, b) {
-            return a.length === b.length && a.every((val, index) => val === b[index]);
-        }
+            // Atualizar exibição de tentativas
+            function updateAttemptsDisplay() {
+                attemptsContainer.style.display = 'block';
+                attemptsSpan.textContent = attempts;
+            }
 
-        // Enviar resultado ao servidor
-        function postCompletion() {
-            fetch("{% url 'hacking_mini_game_view' game.id %}", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": "{{ csrf_token }}"
-                },
-                body: JSON.stringify({ completed: true })
-            })
+            // Comparar dois arrays
+            function arraysEqual(a, b) {
+                return a.length === b.length && a.every((val, index) => val === b[index]);
+            }
+
+            // Enviar resultado ao servidor
+            function postCompletion() {
+                fetch("{% url 'hacking_mini_game_view' game.id %}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": "{{ csrf_token }}"
+                    },
+                    body: JSON.stringify({ completed: true })
+                })
                 .then(response => response.json())
                 .then(data => {
                     if (data.next_screen_url) {
@@ -111,42 +221,74 @@
                         alert(data.message);
                     }
                 });
-        }
+            }
 
-        // Timer
-        function startTimer() {
-            timer = setInterval(() => {
-                timeLeft--;
-                timerContainer.textContent = timeLeft;
-                if (timeLeft <= 0) {
-                    clearInterval(timer);
-                    resultContainer.innerHTML = "<p>Tempo esgotado. Tente novamente.</p>";
-                    attempts--;
-                    if (attempts > 0) {
-                        restartButton.style.display = 'block';
-                    } else {
-                        window.location.href = "{% url 'lose' %}";
+            // Resetar o cronômetro
+            function resetTimer() {
+                clearInterval(timer);
+                timerContainer.style.display = 'none';
+                timeLeft = configuracao.tempo_limite;
+                timeContainer.textContent = timeLeft;
+            }
+
+            // Finalizar jogo
+            function endGame(message) {
+                resultContainer.innerHTML = `<p>${message}</p>`;
+                attemptsSpan.textContent = 0;
+                setTimeout(() => {
+                    resetGame();
+                    window.location.href = "{% url 'lose' %}";
+                }, 3000);
+            }
+
+            // Resetar jogo
+            function resetGame() {
+                userInput.value = "";
+                resultContainer.innerHTML = "";
+                timeLeft = configuracao.tempo_limite;
+                restartButton.style.display = 'none';
+                attemptsContainer.style.display = 'none';
+                attempts = 3;
+            }
+
+            // Timer
+            function startTimer() {
+                resetTimer();
+                timerContainer.style.display = 'block';
+                timer = setInterval(() => {
+                    timeLeft--;
+                    timeContainer.textContent = timeLeft;
+
+                    if (timeLeft <= 0) {
+                        clearInterval(timer);
+                        resultContainer.innerHTML = "<p>Tempo esgotado. Tente novamente.</p>";
+                        toggleInput(false); // Bloquear inputs
+                        attempts--;
+                        updateAttemptsDisplay();
+
+                        if (attempts > 0) {
+                            restartButton.style.display = 'block';
+                        } else {
+                            endGame("Acabaram as tentativas. Você será redirecionado em 3 segundos...");
+                        }
                     }
-                }
-            }, 1000);
-        }
+                }, 1000);
+            }
 
-        // Iniciar jogo
-        startButton.addEventListener('click', () => {
-            instructions.style.display = 'none';
-            hackingGameContainer.style.display = 'block';
-            generatePattern(configuracao.dificuldade);
-            startTimer();
-        });
+            // Eventos do jogo
+            startButton.addEventListener('click', () => {
+                instructions.style.display = 'none';
+                hackingGameContainer.style.display = 'block';
+                generatePattern(configuracao.dificuldade);
+            });
 
-        restartButton.addEventListener('click', () => {
-            userInput.value = '';
-            resultContainer.innerHTML = '';
-            timeLeft = configuracao.tempo_limite;
-            generatePattern(configuracao.dificuldade);
-            startTimer();
-            restartButton.style.display = 'none';
-        });
-    </script>
-</body>
+            submitBtn.addEventListener("click", checkUserInput);
+
+            restartButton.addEventListener('click', () => {
+                resetGame();
+                generatePattern(configuracao.dificuldade);
+                showPattern();
+            });
+        </script>
+    </body>
 </html>
