@@ -141,6 +141,10 @@
     </div>
     <div id="game-over">Game Over!</div>
     <button id="restart-button">Reiniciar</button>
+
+    <audio id="success-sound" src="{% static 'audio/success.wav' %}"></audio>
+    <audio id="fail-sound" src="{% static 'audio/fail.wav' %}"></audio>
+
     <script>
         const configuracao = {{ configuracao|safe }};
         const container = document.getElementById('defense-game-container');
@@ -151,6 +155,8 @@
         const startButton = document.getElementById('start-button');
         const instructions = document.getElementById('instructions');
         const restartButton = document.getElementById('restart-button');
+        const successSound = document.getElementById('success-sound');
+        const failSound = document.getElementById('fail-sound');
 
         let score = 0;
         let lives = 3;
@@ -194,12 +200,14 @@
                 score += 10;
                 scoreDisplay.textContent = score;
                 container.removeChild(threat);
+                successSound.play();
                 checkVictory();
             });
 
             setTimeout(() => {
                 if (container.contains(threat)) {
                     container.removeChild(threat);
+                    failSound.play();
                     loseLife();
                 }
             }, 5000);
@@ -215,6 +223,7 @@
                 score += 20;
                 scoreDisplay.textContent = score;
                 container.removeChild(info);
+                successSound.play();
                 checkVictory();
             });
 

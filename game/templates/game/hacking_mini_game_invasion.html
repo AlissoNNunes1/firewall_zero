@@ -127,6 +127,10 @@
         <button id="restart-button" style="display: none;">Restart</button>
         <div id="attempts-container" style="display: none;">Tentativas restantes: <span id="attempts"></span></div>
     </div>
+
+    <audio id="success-sound" src="{% static 'audio/success.wav' %}"></audio>
+    <audio id="fail-sound" src="{% static 'audio/fail.wav' %}"></audio>
+
     <script>
         const configuracao = {{ configuracao|safe }};
         const sequenceContainer = document.getElementById('sequence');
@@ -143,6 +147,8 @@
         const memorizeTimerBar = document.getElementById('memorize-timer-bar');
         const attemptsContainer = document.getElementById('attempts-container');
         const attemptsSpan = document.getElementById('attempts');
+        const successSound = document.getElementById('success-sound');
+        const failSound = document.getElementById('fail-sound');
         
         let sequence = [];
         let userSequence = [];
@@ -209,6 +215,7 @@
         
                 if (currentStep === sequence.length) {
                     resultContainer.innerHTML = '<p class="success">Você hackeou o sistema com sucesso! Você será redirecionado em 3 segundos...</p>';
+                    successSound.play();
                     stopTimer();
                     setTimeout(() => {
                         postCompletion();
@@ -218,6 +225,7 @@
                 buttons[value - 1].classList.add('incorrect');
                 setTimeout(() => buttons[value - 1].classList.remove('incorrect'), 300);
                 resultContainer.innerHTML = '<p>Sequência incorreta. Tente novamente.</p>';
+                failSound.play();
                 stopTimer();
                 attempts--;
                 attemptsSpan.textContent = attempts;

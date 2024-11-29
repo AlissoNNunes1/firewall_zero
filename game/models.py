@@ -70,12 +70,12 @@ class Character(models.Model):
 
 class Chapter(models.Model):
     title = models.CharField(max_length=100)
-    num = models.IntegerField(default=0)
-    character = models.ForeignKey(Character, on_delete=models.CASCADE, related_name='chapters', default=1)
+    num = models.IntegerField()
+    character = models.ForeignKey(Character, on_delete=models.CASCADE)
+    trilha_sonora = models.FileField(upload_to='trilhas_sonoras/', blank=True, null=True)  # Novo campo de trilha sonora
 
     def __str__(self):
         return self.title
-
 
 class Screen(models.Model):
     name = models.CharField(max_length=100, blank=True, null=True)

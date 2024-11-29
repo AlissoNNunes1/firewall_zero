@@ -110,6 +110,10 @@
     </style>
 </head>
 <body class="screen_background">
+    <audio id="trilha-sonora" autoplay loop>
+        <source src="{{ screen.chapter.trilha_sonora.url }}" type="audio/mpeg">
+        Seu navegador não suporta o elemento de áudio.
+    </audio>
     <a href="#" class="back-to-home-icon" onclick="showPopup(event)">
         <i class="fas fa-home"></i>
     </a>
@@ -126,7 +130,7 @@
             {% if choice.next_screen %}
                 <li class="screen_answer_item">
                     <a class="screen_answer_link" href="{% url 'screen_view' choice.next_screen.chapter.num choice.next_screen.num %}"
-                       onclick="document.getElementById('update-progress-form-{{ choice.next_screen.num }}').submit();">
+                       onclick="storeMusicState()">
                         {{ choice.text }}
                     </a>
                     <form id="update-progress-form-{{ choice.next_screen.num }}" method="post" action="{% url 'update_progress' %}" style="display: none;">
@@ -137,7 +141,8 @@
                 </li>
             {% elif choice.hacking_mini_game %}
                 <li class="screen_answer_item">
-                    <a class="screen_answer_link" href="{% url 'hacking_mini_game_view' choice.hacking_mini_game.id %}">
+                    <a class="screen_answer_link" href="{% url 'hacking_mini_game_view' choice.hacking_mini_game.id %}"
+                       onclick="storeMusicState()">
                         {{ choice.text }}
                     </a>
                 </li>
@@ -241,6 +246,24 @@
         function goHome() {
             window.location.href = "{% url 'home_view' %}";
         }
+
+        function storeMusicState() {
+            const audio = document.getElementById('trilha-sonora');
+            localStorage.setItem('musicTime', audio.currentTime);
+            localStorage.setItem('isPlaying', !audio.paused);
+        }
+
+        window.addEventListener('load', function() {
+            const audio = document.getElementById('trilha-sonora');
+            const storedTime = localStorage.getItem('musicTime');
+            const isPlaying = localStorage.getItem('isPlaying') === 'true';
+            if (storedTime) {
+                audio.currentTime = storedTime;
+            }
+            if (isPlaying) {
+                audio.play();
+            }
+        });
     </script>
 </body>
 </html>

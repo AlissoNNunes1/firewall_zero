@@ -152,6 +152,10 @@
     </div>
     <div id="game-over">Missão Concluída!</div>
     <button id="restart-button">Reiniciar</button>
+
+    <audio id="success-sound" src="{% static 'audio/success.wav' %}"></audio>
+    <audio id="fail-sound" src="{% static 'audio/fail.wav' %}"></audio>
+
     <script>
         const gameContainer = document.getElementById('game-container');
         const startButton = document.getElementById('start-button');
@@ -161,6 +165,8 @@
         const attemptsDisplay = document.getElementById('attempts-left');
         const gameOverDisplay = document.getElementById('game-over');
         const restartButton = document.getElementById('restart-button');
+        const successSound = document.getElementById('success-sound');
+        const failSound = document.getElementById('fail-sound');
 
         let score = 0;
         let timeLeft = 60;
@@ -174,13 +180,13 @@
 
         switch (config.dificuldade) {
             case 'fácil':
-                targetScore = 150;
+                targetScore = 100;
                 break;
             case 'média':
-                targetScore = 200;
+                targetScore = 150;
                 break;
             case 'difícil':
-                targetScore = 300;
+                targetScore = 200;
                 break;
         }
 
@@ -195,6 +201,7 @@
                 score += 10;
                 scoreDisplay.textContent = score;
                 gameContainer.removeChild(node);
+                successSound.play();
                 checkVictory();
             });
 
@@ -215,6 +222,7 @@
             camera.addEventListener('mouseover', () => {
                 attemptsLeft--;
                 attemptsDisplay.textContent = attemptsLeft;
+                failSound.play();
                 if (attemptsLeft <= 0) {
                     endGame(false);
                 } else {
@@ -267,6 +275,11 @@
             gameOverDisplay.style.display = 'block';
             gameOverDisplay.textContent = success ? 'Missão Concluída com Sucesso!' : 'Detectado! Missão Falhou!';
             restartButton.style.display = success ? 'none' : 'block';
+            if (success) {
+                successSound.play();
+            } else {
+                failSound.play();
+            }
             if (!success && attemptsLeft <= 0) {
                 window.location.href = "{% url 'lose' %}";
             } else {

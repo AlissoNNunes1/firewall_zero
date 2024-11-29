@@ -63,11 +63,8 @@
             <button id="restart-button" style="display: none">Restart</button>
         </div>
 
-        <audio
-            id="success-sound"
-            src="{% static 'sounds/success.mp3' %}"
-        ></audio>
-        <audio id="fail-sound" src="{% static 'sounds/fail.mp3' %}"></audio>
+    <audio id="success-sound" src="{% static 'audio/success.wav' %}"></audio>
+    <audio id="fail-sound" src="{% static 'audio/fail.wav' %}"></audio>
 
         <script>
             const configuracao = {{ configuracao|safe }};

@@ -52,12 +52,18 @@
             <p>Machine Clicks: <span id="machine-click-count">0</span></p>
         </div>
     </div>
+
+    <audio id="success-sound" src="{% static 'audio/success.wav' %}"></audio>
+    <audio id="fail-sound" src="{% static 'audio/fail.wav' %}"></audio>
+
     <script>
         const configuracao = {{ configuracao|safe }};
         const clickerButton = document.getElementById('clicker-button');
         const clickCountDisplay = document.getElementById('click-count');
         const machineClickCountDisplay = document.getElementById('machine-click-count');
         const resultContainer = document.getElementById('result');
+        const successSound = document.getElementById('success-sound');
+        const failSound = document.getElementById('fail-sound');
         let clickCount = 0;
         let machineClickCount = 0;
         let machineClickRate;
@@ -95,9 +101,11 @@
             const targetClicks = configuracao.dificuldade === 'fácil' ? 20 : configuracao.dificuldade === 'média' ? 50 : configuracao.dificuldade === 'difícil' ? 100 : 50;
             if (clickCount >= targetClicks) {
                 resultContainer.innerHTML = '<p>Você venceu!</p>';
+                successSound.play();
                 postCompletion(true);
             } else if (machineClickCount >= targetClicks) {
                 resultContainer.innerHTML = '<p>A máquina venceu!</p>';
+                failSound.play();
                 postCompletion(false);
             }
         }

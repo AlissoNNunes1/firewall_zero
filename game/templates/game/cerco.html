@@ -173,6 +173,10 @@
     </div>
     <div id="game-over">Missão Concluída!</div>
     <button id="restart-button">Reiniciar</button>
+
+    <audio id="success-sound" src="{% static 'audio/success.wav' %}"></audio>
+    <audio id="fail-sound" src="{% static 'audio/fail.wav' %}"></audio>
+
     <script>
         const configuracao = {
             dificuldade: 'difícil'  // Defina a dificuldade aqui ou obtenha-a de outra forma
@@ -185,6 +189,8 @@
         const startButton = document.getElementById('start-button');
         const instructions = document.getElementById('instructions');
         const restartButton = document.getElementById('restart-button');
+        const successSound = document.getElementById('success-sound');
+        const failSound = document.getElementById('fail-sound');
 
         let score = 0;
         let timeLeft = 30;
@@ -238,6 +244,7 @@
                 score += 10;
                 scoreDisplay.textContent = score;
                 container.removeChild(ally);
+                successSound.play();
                 checkVictory();
             });
 
@@ -259,6 +266,7 @@
                 score += 5;
                 scoreDisplay.textContent = score;
                 container.removeChild(enemy);
+                successSound.play();
                 checkVictory();
             });
 
@@ -280,6 +288,7 @@
                 score += 20;
                 scoreDisplay.textContent = score;
                 container.removeChild(safeZone);
+                successSound.play();
                 checkVictory();
             });
 
@@ -301,6 +310,7 @@
                 score += 50;
                 scoreDisplay.textContent = score;
                 container.removeChild(powerUp);
+                successSound.play();
                 checkVictory();
             });
 
@@ -396,3 +406,4 @@
         });
     </script>
 </body>
+</html>

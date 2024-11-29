@@ -165,6 +165,9 @@
         </div>
     </div>
 
+    <audio id="success-sound" src="{% static 'audio/success.wav' %}"></audio>
+    <audio id="fail-sound" src="{% static 'audio/fail.wav' %}"></audio>
+
     <script>
         const battleContainer = document.getElementById('battle-container');
         const startButton = document.getElementById('start-button');
@@ -176,6 +179,8 @@
         const attemptsDisplay = document.getElementById('attempts');
         const victoryModal = document.getElementById('victory-modal');
         const nextLevelButton = document.getElementById('next-level-button');
+        const successSound = document.getElementById('success-sound');
+        const failSound = document.getElementById('fail-sound');
 
         let pythonHealth = 100;
         let playerHealth = 100;
@@ -222,6 +227,7 @@
                 pythonHealth -= 10;
                 pythonHealthDisplay.textContent = pythonHealth;
                 battleContainer.removeChild(target);
+                successSound.play();
                 checkVictory();
             });
 
@@ -250,6 +256,7 @@
                 playerHealth -= 10;
                 playerHealthDisplay.textContent = playerHealth;
                 battleContainer.removeChild(attack);
+                failSound.play();
                 checkDefeat();
                 setTimeout(createPythonAttack, 500); // Criar novo ataque após 500ms
             });
@@ -264,6 +271,7 @@
 
         function checkVictory() {
             if (pythonHealth <= 0) {
+                successSound.play();
                 endGame(true);
             } else {
                 setTimeout(createPythonTarget, 500); // Criar novo alvo após 500ms
@@ -272,6 +280,7 @@
 
         function checkDefeat() {
             if (playerHealth <= 0) {
+                failSound.play();
                 attempts -= 1;
                 attemptsDisplay.textContent = attempts;
                 if (attempts > 0) {
