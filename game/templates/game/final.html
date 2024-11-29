@@ -12,7 +12,7 @@
             max-width: 1000px;
             height: 700px;
             margin: auto;
-            background-color: #111;a
+            background-color: #111;
             color: white;
             padding: 20px;
             border-radius: 10px;
@@ -20,26 +20,25 @@
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
             overflow: hidden;
         }
-
+    
+        p {
+            color: white;
+        }
+    
+        h1 {
+            color: white;
+        }
+    
         /* Estilos do oponente */
         .python-target {
-            width: 70px;
-            height: 70px;
+            width: 40px;
+            height: 40px;
             background-color: red;
             border-radius: 50%;
             position: absolute;
             cursor: pointer;
-            animation: moveTarget 3s linear infinite;
         }
-
-        @keyframes moveTarget {
-            0% { left: 10%; top: 20%; }
-            25% { left: 70%; top: 20%; }
-            50% { left: 70%; top: 70%; }
-            75% { left: 10%; top: 70%; }
-            100% { left: 10%; top: 20%; }
-        }
-
+    
         /* Estilos dos ataques */
         .python-attack {
             width: 40px;
@@ -47,29 +46,22 @@
             background-color: yellow;
             border-radius: 50%;
             position: absolute;
-            animation: moveAttack 2s linear infinite;
         }
-
-        @keyframes moveAttack {
-            0% { left: 50%; top: -10%; }
-            50% { left: 80%; top: 50%; }
-            100% { left: -10%; top: 80%; }
-        }
-
+    
         /* Estilos do HUD */
         #hud {
             margin-top: 20px;
             font-size: 1.2rem;
             text-align: center;
         }
-
+    
         #game-over {
             display: none;
             font-size: 1.5rem;
             margin-top: 20px;
             color: white;
         }
-
+    
         #instructions {
             background-color: #333;
             color: white;
@@ -78,7 +70,7 @@
             margin-bottom: 20px;
             text-align: center;
         }
-
+    
         #instructions button {
             background-color: #00aaff;
             color: white;
@@ -88,11 +80,11 @@
             border-radius: 10px;
             cursor: pointer;
         }
-
+    
         #instructions button:hover {
             background-color: #007acc;
         }
-
+    
         #restart-button {
             display: none;
             background-color: #ff0000;
@@ -104,9 +96,49 @@
             cursor: pointer;
             margin-top: 20px;
         }
-
+    
         #restart-button:hover {
             background-color: #cc0000;
+        }
+    
+        /* Estilos do modal */
+        #victory-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+    
+        #victory-modal-content {
+            background-color: #333;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 400px;
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+        }
+    
+        #victory-modal button {
+            background-color: #00aaff;
+            color: white;
+            padding: 10px 20px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+    
+        #victory-modal button:hover {
+            background-color: #007acc;
         }
     </style>
 </head>
@@ -124,6 +156,15 @@
     </div>
     <div id="game-over">Confronto Finalizado!</div>
     <button id="restart-button" style="display: none;">Reiniciar Jogo</button>
+
+    <!-- Modal de Vitória -->
+    <div id="victory-modal">
+        <div id="victory-modal-content">
+            <p>Parabéns! Você venceu!</p>
+            <button id="next-level-button">Próxima Fase</button>
+        </div>
+    </div>
+
     <script>
         const battleContainer = document.getElementById('battle-container');
         const startButton = document.getElementById('start-button');
@@ -133,21 +174,49 @@
         const gameOverDisplay = document.getElementById('game-over');
         const restartButton = document.getElementById('restart-button');
         const attemptsDisplay = document.getElementById('attempts');
+        const victoryModal = document.getElementById('victory-modal');
+        const nextLevelButton = document.getElementById('next-level-button');
 
         let pythonHealth = 100;
         let playerHealth = 100;
         let attempts = 3;
-        let targetInterval;
-        let attackInterval;
+        let difficultyLevel = 1;
+
+        // Variáveis configuráveis
+        const numTargets = 3; // Quantidade de alvos
+        const numAttacks = 4; // Quantidade de ataques
+        const targetSpeed = 1; // Velocidade dos alvos (em segundos)
+        const attackSpeed = 1; // Velocidade dos ataques (em segundos)
+
+        function createRandomKeyframes() {
+            const keyframes = `
+                @keyframes move${Math.random().toString(36).substr(2, 9)} {
+                    0% { left: ${Math.random() * 100}%; top: ${Math.random() * 100}%; }
+                    25% { left: ${Math.random() * 100}%; top: ${Math.random() * 100}%; }
+                    50% { left: ${Math.random() * 100}%; top: ${Math.random() * 100}%; }
+                    75% { left: ${Math.random() * 100}%; top: ${Math.random() * 100}%; }
+                    100% { left: ${Math.random() * 100}%; top: ${Math.random() * 100}%; }
+                }
+            `;
+            const styleSheet = document.styleSheets[0];
+            styleSheet.insertRule(keyframes, styleSheet.cssRules.length);
+            return keyframes.match(/move\w+/)[0];
+        }
+
+        function createPythonTargets() {
+            for (let i = 0; i < numTargets; i++) {
+                createPythonTarget();
+            }
+        }
 
         function createPythonTarget() {
             const target = document.createElement('div');
             target.classList.add('python-target');
-            target.style.left = Math.random() * 80 + '%';
-            target.style.top = Math.random() * 80 + '%';
+            const animationName = createRandomKeyframes();
+            target.style.animation = `${animationName} ${targetSpeed}s linear infinite`;
             battleContainer.appendChild(target);
 
-            target.addEventListener('click', () => {
+            target.addEventListener('mouseover', () => {
                 pythonHealth -= 10;
                 pythonHealthDisplay.textContent = pythonHealth;
                 battleContainer.removeChild(target);
@@ -157,15 +226,22 @@
             setTimeout(() => {
                 if (battleContainer.contains(target)) {
                     battleContainer.removeChild(target);
+                    setTimeout(createPythonTarget, 500); // Criar novo alvo após 500ms
                 }
-            }, 3000);
+            }, targetSpeed * 1000);
+        }
+
+        function createPythonAttacks() {
+            for (let i = 0; i < numAttacks; i++) {
+                createPythonAttack();
+            }
         }
 
         function createPythonAttack() {
             const attack = document.createElement('div');
             attack.classList.add('python-attack');
-            attack.style.left = Math.random() * 80 + '%';
-            attack.style.top = Math.random() * 80 + '%';
+            const animationName = createRandomKeyframes();
+            attack.style.animation = `${animationName} ${attackSpeed}s linear infinite`;
             battleContainer.appendChild(attack);
 
             attack.addEventListener('mouseover', () => {
@@ -173,18 +249,22 @@
                 playerHealthDisplay.textContent = playerHealth;
                 battleContainer.removeChild(attack);
                 checkDefeat();
+                setTimeout(createPythonAttack, 500); // Criar novo ataque após 500ms
             });
 
             setTimeout(() => {
                 if (battleContainer.contains(attack)) {
                     battleContainer.removeChild(attack);
+                    setTimeout(createPythonAttack, 500); // Criar novo ataque após 500ms
                 }
-            }, 3000);
+            }, attackSpeed * 1000);
         }
 
         function checkVictory() {
             if (pythonHealth <= 0) {
                 endGame(true);
+            } else {
+                setTimeout(createPythonTarget, 500); // Criar novo alvo após 500ms
             }
         }
 
@@ -206,7 +286,7 @@
             gameOverDisplay.style.display = 'block';
             gameOverDisplay.textContent = playerWon ? 'Você venceu!' : 'Game Over!';
             if (playerWon) {
-                postCompletion(true);
+                showVictoryModal();
             } else {
                 if (attempts > 0) {
                     restartButton.style.display = 'block';
@@ -214,6 +294,10 @@
                     window.location.href = "{% url 'lose' %}";
                 }
             }
+        }
+
+        function showVictoryModal() {
+            victoryModal.style.display = 'block';
         }
 
         function postCompletion(playerWon) {
@@ -251,12 +335,20 @@
             instructions.style.display = 'none';
             battleContainer.style.display = 'block';
 
-            targetInterval = setInterval(createPythonTarget, 2000);
-            attackInterval = setInterval(createPythonAttack, 3000);
+            createPythonTargets();
+            createPythonAttacks();
+
+            // Aumentar a dificuldade progressivamente
+            setInterval(() => {
+                difficultyLevel += 0.1;
+            }, 5000);
         }
 
         startButton.addEventListener('click', startGame);
         restartButton.addEventListener('click', resetGame);
+        nextLevelButton.addEventListener('click', () => {
+            postCompletion(true);
+        });
     </script>
 </body>
 </html>
