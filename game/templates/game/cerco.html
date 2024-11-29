@@ -21,7 +21,7 @@
             overflow: hidden;
         }
     
-        .ally, .enemy, .safe-zone {
+        .ally, .enemy, .safe-zone, .power-up {
             position: absolute;
             border-radius: 50%;
             cursor: pointer;
@@ -70,6 +70,12 @@
             width: 50px;
             height: 50px;
             background-color: green;
+        }
+    
+        .power-up {
+            width: 40px;
+            height: 40px;
+            background-color: gold;
         }
     
         #score-board {
@@ -179,7 +185,7 @@
         const startButton = document.getElementById('start-button');
         const instructions = document.getElementById('instructions');
         const restartButton = document.getElementById('restart-button');
-    
+
         let score = 0;
         let timeLeft = 30;
         let attemptsLeft = 3;
@@ -187,7 +193,8 @@
         let allyIntervalId;
         let enemyIntervalId;
         let safeZoneIntervalId;
-    
+        let powerUpIntervalId;
+
         // Definir a pontuação alvo e a velocidade das ameaças com base na dificuldade
         switch (configuracao.dificuldade) {
             case 'fácil':
@@ -195,26 +202,30 @@
                 allyInterval = 1500; // 1.5 segundos
                 enemyInterval = 2000; // 2 segundos
                 safeZoneInterval = 3000; // 3 segundos
+                powerUpInterval = 5000; // 5 segundos
                 break;
             case 'média':
                 targetScore = 200;
                 allyInterval = 1000; // 1 segundo
                 enemyInterval = 1500; // 1.5 segundos
                 safeZoneInterval = 2000; // 2 segundos
+                powerUpInterval = 4000; // 4 segundos
                 break;
             case 'difícil':
                 targetScore = 300;
                 allyInterval = 800; // 0.8 segundos
                 enemyInterval = 1200; // 1.2 segundos
                 safeZoneInterval = 1500; // 1.5 segundos
+                powerUpInterval = 3000; // 3 segundos
                 break;
             default:
                 targetScore = 200;
                 allyInterval = 1000; // 1 segundo
                 enemyInterval = 1500; // 1.5 segundos
                 safeZoneInterval = 2000; // 2 segundos
+                powerUpInterval = 4000; // 4 segundos
         }
-    
+
         function createAlly() {
             const ally = document.createElement('div');
             ally.classList.add('ally');
@@ -222,84 +233,114 @@
             ally.style.left = Math.random() * 80 + '%';
             ally.style.top = Math.random() * 80 + '%';
             container.appendChild(ally);
-    
+
             ally.addEventListener('click', () => {
                 score += 10;
                 scoreDisplay.textContent = score;
                 container.removeChild(ally);
                 checkVictory();
             });
-    
+
             setTimeout(() => {
                 if (container.contains(ally)) {
                     container.removeChild(ally);
                 }
             }, 3000);
         }
-    
+
         function createEnemy() {
             const enemy = document.createElement('div');
             enemy.classList.add('enemy');
             enemy.style.left = Math.random() * 80 + '%';
             enemy.style.top = Math.random() * 80 + '%';
             container.appendChild(enemy);
-    
+
+            enemy.addEventListener('click', () => {
+                score += 5;
+                scoreDisplay.textContent = score;
+                container.removeChild(enemy);
+                checkVictory();
+            });
+
             setTimeout(() => {
                 if (container.contains(enemy)) {
                     container.removeChild(enemy);
                 }
             }, 3000);
         }
-    
+
         function createSafeZone() {
             const safeZone = document.createElement('div');
             safeZone.classList.add('safe-zone');
             safeZone.style.left = Math.random() * 80 + '%';
             safeZone.style.top = Math.random() * 80 + '%';
             container.appendChild(safeZone);
-    
+
             safeZone.addEventListener('click', () => {
                 score += 20;
                 scoreDisplay.textContent = score;
                 container.removeChild(safeZone);
                 checkVictory();
             });
-    
+
             setTimeout(() => {
                 if (container.contains(safeZone)) {
                     container.removeChild(safeZone);
                 }
             }, 5000);
         }
-    
+
+        function createPowerUp() {
+            const powerUp = document.createElement('div');
+            powerUp.classList.add('power-up');
+            powerUp.style.left = Math.random() * 80 + '%';
+            powerUp.style.top = Math.random() * 80 + '%';
+            container.appendChild(powerUp);
+
+            powerUp.addEventListener('click', () => {
+                score += 50;
+                scoreDisplay.textContent = score;
+                container.removeChild(powerUp);
+                checkVictory();
+            });
+
+            setTimeout(() => {
+                if (container.contains(powerUp)) {
+                    container.removeChild(powerUp);
+                }
+            }, 5000);
+        }
+
         function countdown() {
             const timer = setInterval(() => {
                 timeLeft -= 1;
                 timeDisplay.textContent = timeLeft;
-    
+
                 if (timeLeft <= 0) {
                     clearInterval(timer);
                     clearInterval(allyIntervalId);
                     clearInterval(enemyIntervalId);
                     clearInterval(safeZoneIntervalId);
+                    clearInterval(powerUpIntervalId);
                     gameOverDisplay.style.display = 'block';
                     gameOverDisplay.textContent = score >= targetScore ? 'Você venceu!' : 'Missão Concluída!';
                     postCompletion(score >= targetScore);
                 }
             }, 1000);
         }
-    
+
         function checkVictory() {
             if (score >= targetScore) {
                 clearInterval(allyIntervalId);
                 clearInterval(enemyIntervalId);
                 clearInterval(safeZoneIntervalId);
+                clearInterval(powerUpIntervalId);
                 gameOverDisplay.style.display = 'block';
                 gameOverDisplay.textContent = 'Você venceu!';
                 postCompletion(true);
             }
         }
-    
+
         function postCompletion(playerWon) {
             fetch("{% url 'hacking_mini_game_view' game.id %}", {
                 method: 'POST',
@@ -318,11 +359,12 @@
                 }
             });
         }
-    
+
         function resetGame() {
             clearInterval(allyIntervalId);
             clearInterval(enemyIntervalId);
             clearInterval(safeZoneIntervalId);
+            clearInterval(powerUpIntervalId);
             container.innerHTML = '';
             score = 0;
             timeLeft = 30;
@@ -333,15 +375,16 @@
             allyIntervalId = setInterval(createAlly, allyInterval);
             enemyIntervalId = setInterval(createEnemy, enemyInterval);
             safeZoneIntervalId = setInterval(createSafeZone, safeZoneInterval);
+            powerUpIntervalId = setInterval(createPowerUp, powerUpInterval);
             countdown();
         }
-    
+
         startButton.addEventListener('click', () => {
             instructions.style.display = 'none';
             container.style.display = 'block';
             resetGame();
         });
-    
+
         restartButton.addEventListener('click', () => {
             attemptsLeft--;
             attemptsDisplay.textContent = attemptsLeft;
@@ -353,4 +396,3 @@
         });
     </script>
 </body>
-</html>
