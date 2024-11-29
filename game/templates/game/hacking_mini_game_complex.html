@@ -1,452 +1,450 @@
 {% load static %}
 <!DOCTYPE html>
 <html>
-<head>
-    <title>{{ game.name }}</title>
-    <link rel="stylesheet" href="{% static 'global.css' %}">
-    <link rel="stylesheet" href="{% static 'hacking_mini_game.css' %}">
-    <style>
-        #hacking-game-container {
-            width: 80%;
-            max-width: 600px;
-            margin: auto;
-            text-align: center;
-            background-color: #333;
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-        }
-    
-        #complex {
-            font-size: 1.2rem;
-            margin: 10px 0;
-            color: #00ff00;
-        }
-    
-        .progress-bar {
-            width: 100%;
-            background-color: #555;
-            border-radius: 5px;
-            margin: 10px 0;
-            overflow: hidden;
-        }
-    
-        .progress {
-            height: 20px;
-            background-color: #00ff00;
-            width: 0%;
-            transition: width 0.5s;
-        }
-    
-        .stage-complete {
-            color: #00ff00;
-            font-weight: bold;
-        }
-    
-        .stage-failed {
-            color: #ff0000;
-            font-weight: bold;
-        }
-    
-        .button {
-            width: 60px;
-            height: 60px;
-            margin: 10px;
-            background-color: #444;
-            color: white;
-            border-radius: 50%;
-            font-size: 1.5rem;
-            display: inline-flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            user-select: none;
-            transition: transform 0.3s, background-color 0.3s;
-        }
-    
-        .button:hover {
-            transform: scale(1.1);
-        }
-    
-        .button.correct {
-            background-color: #00ff00;
-        }
-    
-        .button.incorrect {
-            background-color: #ff0000;
-        }
-    
-        #buttons-container {
-            display: none;
-        }
-    
-        #restart-button {
-            display: block;
-            margin: 20px auto;
-            padding: 10px 20px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        
-        #restart-button:hover {
-            background-color: #0056b3;
-        }
-        
-        #result p {
-            color: red;
-            font-size: 1.2rem;
-            font-weight: bold;
-            text-align: center;
-            margin-top: 20px;
-        }
-        
-        #result p.success {
-            color: green;
-        }
-        
-        #result p.failure {
-            color: red;
-        }
-    
-        #attempts-container {
-            text-align: center;
-            margin-top: 10px;
-            font-size: 1rem;
-            color: #ff9f1c;
-            font-weight: bold;
-        }
-    
-        #memorize-timer-container {
-            width: 100%;
-            background-color: #ddd;
-            margin-top: 10px;
-        }
-        
-        #memorize-timer-bar {
-            width: 100%;
-            height: 20px;
-            background-color: #4caf50;
-            transition: width 0.5s;
-        }
-    
-        #input-container {
-            margin-top: 20px;
-        }
-        #user-input{
-            color:black;
-        }
-    
-        #input-container input {
-            padding: 10px;
-            font-size: 1rem;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            width: 80%;
-            margin: 10px 0;
-        }
-    
-        #input-container button {
-            padding: 10px 20px;
-            font-size: 1rem;
-            border-radius: 5px;
-            border: none;
-            background-color: #007bff;
-            color: white;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-    
-        #input-container button:hover {
-            background-color: #0056b3;
-        }
-    </style>
-</head>
-<body>
-    <h1 id="name">{{ game.name }}</h1>
-    <p id="desc">{{ game.descricao }}</p>
-
-    <div id="instructions">
-        <p>Instruções: Aparecerá uma série de desafios diferentes<br>Complete as etapas de acordo com o tipo de desafio apresentado.</p>
-        <button id="start-button">Começar</button>
-    </div>
-
-    <div id="hacking-game-container" style="display: none;">
-        <div class="progress-bar">
-            <div class="progress" id="progress"></div>
-        </div>
-        <div id="complex-container">
-            <p id="instruction">Complete a etapa:</p>
-            <div id="complex"></div>
-        </div>
-        <div id="result"></div>
-        <div id="timer">Tempo restante: <span id="time">{{ configuracao.tempo_limite }}</span> segundos</div>
-        <div id="attempts">Tentativas restantes: <span id="attempts-count">3</span></div>
-        <div id="memorize-timer-container">
-            <div id="memorize-timer-bar"></div>
-        </div>
-        <div id="buttons-container">
-            <p>Clique nos botões na ordem correta:</p>
-            <div class="button" data-value="1">1</div>
-            <div class="button" data-value="2">2</div>
-            <div class="button" data-value="3">3</div>
-            <div class="button" data-value="4">4</div>
-        </div>
-        <div id="input-container" style="display: none;">
-            <input type="text" id="user-input" placeholder="Digite sua resposta" disabled>
-            <button id="submit-button">Enviar</button>
-        </div>
-        <button id="restart-button" style="display: none;">Restart</button>
-    </div>
-
-    <audio id="success-sound" src="{% static 'audio/success.wav' %}"></audio>
-    <audio id="fail-sound" src="{% static 'audio/fail.wav' %}"></audio>
-
-    <script>
-        const configuracao = {{ configuracao|safe }};
-        const complexContainer = document.getElementById('complex');
-        const resultContainer = document.getElementById('result');
-        const timerContainer = document.getElementById('time');
-        const progressBar = document.getElementById('progress');
-        const instruction = document.getElementById('instruction');
-        const startButton = document.getElementById('start-button');
-        const restartButton = document.getElementById('restart-button');
-        const hackingGameContainer = document.getElementById('hacking-game-container');
-        const instructions = document.getElementById('instructions');
-        const attemptsCount = document.getElementById('attempts-count');
-        const buttons = document.querySelectorAll('.button');
-        const buttonsContainer = document.getElementById('buttons-container');
-        const memorizeTimerContainer = document.getElementById('memorize-timer-container');
-        const memorizeTimerBar = document.getElementById('memorize-timer-bar');
-        const inputContainer = document.getElementById('input-container');
-        const userInput = document.getElementById('user-input');
-        const submitButton = document.getElementById('submit-button');
-        const successSound = document.getElementById('success-sound');
-        const failSound = document.getElementById('fail-sound');
-    
-        let stages = [];
-        let currentStage = 0;
-        let timeLeft = configuracao.tempo_limite;
-        let attempts = 3;
-        let timer;
-    
-        function generateArithmeticSequence(length, start, step) {
-            return Array.from({ length }, (_, i) => start + i * step);
-        }
-    
-        function generateGeometricSequence(length, start, factor) {
-            return Array.from({ length }, (_, i) => start * Math.pow(factor, i));
-        }
-    
-        function generateFibonacciSequence(length) {
-            const seq = [1, 1];
-            for (let i = 2; i < length; i++) {
-                seq.push(seq[i - 1] + seq[i - 2]);
+    <head>
+        <title>{{ game.name }}</title>
+        <link rel="stylesheet" href="{% static 'global.css' %}" />
+        <link rel="stylesheet" href="{% static 'hacking_mini_game.css' %}" />
+        <style>
+            #hacking-game-container {
+                width: 80%;
+                max-width: 600px;
+                margin: auto;
+                text-align: center;
+                background-color: #333;
+                color: white;
+                padding: 20px;
+                border-radius: 10px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
             }
-            return seq;
-        }
-    
-        function generateStages(dificuldade) {
-            const length = dificuldade === 'fácil' ? 3 : dificuldade === 'média' ? 5 : dificuldade === 'difícil' ? 7 : 5;
-            for (let i = 0; i < length; i++) {
-                if (i % 2 === 0) {
-                    stages.push({
-                        type: 'pattern',
-                        data: Array.from({ length: 5 }, () => Math.floor(Math.random() * 10))
-                    });
-                } else {
-                    const sequenceType = Math.floor(Math.random() * 3);
-                    let seq;
-                    switch (sequenceType) {
-                        case 0:
-                            const start = Math.floor(Math.random() * 10);
-                            const step = Math.floor(Math.random() * 5) + 1;
-                            seq = generateArithmeticSequence(6, start, step);
-                            break;
-                        case 1:
-                            const gStart = Math.floor(Math.random() * 5) + 1;
-                            const factor = Math.floor(Math.random() * 3) + 2;
-                            seq = generateGeometricSequence(6, gStart, factor);
-                            break;
-                        case 2:
-                            seq = generateFibonacciSequence(6);
-                            break;
+
+            #complex {
+                font-size: 1.2rem;
+                margin: 10px 0;
+                color: #00ff00;
+            }
+
+            .progress-bar {
+                width: 100%;
+                background-color: #555;
+                border-radius: 5px;
+                margin: 10px 0;
+                overflow: hidden;
+            }
+
+            .progress {
+                height: 20px;
+                background-color: #00ff00;
+                width: 0%;
+                transition: width 0.5s;
+            }
+
+            .stage-complete {
+                color: #00ff00;
+                font-weight: bold;
+            }
+
+            .stage-failed {
+                color: #ff0000;
+                font-weight: bold;
+            }
+
+            .button {
+                width: 60px;
+                height: 60px;
+                margin: 10px;
+                background-color: #444;
+                color: white;
+                border-radius: 50%;
+                font-size: 1.5rem;
+                display: inline-flex;
+                justify-content: center;
+                align-items: center;
+                cursor: pointer;
+                user-select: none;
+                transition: transform 0.3s, background-color 0.3s;
+            }
+
+            .button:hover {
+                transform: scale(1.1);
+            }
+
+            .button.correct {
+                background-color: #00ff00;
+            }
+
+            .button.incorrect {
+                background-color: #ff0000;
+            }
+
+            #buttons-container {
+                display: none;
+            }
+
+            #restart-button {
+                display: block;
+                margin: 20px auto;
+                padding: 10px 20px;
+                background-color: #007bff;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                font-size: 1rem;
+                cursor: pointer;
+                transition: background-color 0.3s;
+            }
+
+            #restart-button:hover {
+                background-color: #0056b3;
+            }
+
+            #result p {
+                color: red;
+                font-size: 1.2rem;
+                font-weight: bold;
+                text-align: center;
+                margin-top: 20px;
+            }
+
+            #result p.success {
+                color: green;
+            }
+
+            #result p.failure {
+                color: red;
+            }
+
+            #attempts-container {
+                text-align: center;
+                margin-top: 10px;
+                font-size: 1rem;
+                color: #ff9f1c;
+                font-weight: bold;
+            }
+
+            #memorize-timer-container {
+                width: 100%;
+                background-color: #ddd;
+                margin-top: 10px;
+            }
+
+            #memorize-timer-bar {
+                width: 100%;
+                height: 20px;
+                background-color: #4caf50;
+                transition: width 0.5s;
+            }
+
+            #input-container {
+                margin-top: 20px;
+            }
+            #user-input {
+                color: black;
+            }
+
+            #input-container input {
+                padding: 10px;
+                font-size: 1rem;
+                border-radius: 5px;
+                border: 1px solid #ccc;
+                width: 80%;
+                margin: 10px 0;
+            }
+
+            #input-container button {
+                padding: 10px 20px;
+                font-size: 1rem;
+                border-radius: 5px;
+                border: none;
+                background-color: #007bff;
+                color: white;
+                cursor: pointer;
+                transition: background-color 0.3s;
+            }
+
+            #input-container button:hover {
+                background-color: #0056b3;
+            }
+        </style>
+    </head>
+    <body>
+        <h1 id="name">{{ game.name }}</h1>
+        <p id="desc">{{ game.descricao }}</p>
+
+        <div id="instructions">
+            <p>
+                Instruções: Aparecerá uma série de desafios diferentes<br />Complete
+                as etapas de acordo com o tipo de desafio apresentado.
+            </p>
+            <button id="start-button">Começar</button>
+        </div>
+
+        <div id="hacking-game-container" style="display: none">
+            <div class="progress-bar">
+                <div class="progress" id="progress"></div>
+            </div>
+            <div id="complex-container">
+                <p id="instruction">Complete a etapa:</p>
+                <div id="complex"></div>
+            </div>
+            <div id="result"></div>
+            <div id="timer">
+                Tempo restante:
+                <span id="time">{{ configuracao.tempo_limite }}</span> segundos
+            </div>
+            <div id="attempts">
+                Tentativas restantes: <span id="attempts-count">5</span>
+            </div>
+            <div id="memorize-timer-container">
+                <div id="memorize-timer-bar"></div>
+            </div>
+            <div id="input-container" style="display: none">
+                <input
+                    type="text"
+                    id="user-input"
+                    placeholder="Digite sua resposta"
+                    disabled
+                />
+                <button id="submit-button">Enviar</button>
+            </div>
+            <button id="restart-button" style="display: none">Restart</button>
+        </div>
+
+        <audio
+            id="success-sound"
+            src="{% static 'audio/success.wav' %}"
+        ></audio>
+        <audio id="fail-sound" src="{% static 'audio/fail.wav' %}"></audio>
+
+        <script>
+                const configuracao = {{ configuracao|safe }};
+                const complexContainer = document.getElementById('complex');
+                const resultContainer = document.getElementById('result');
+                const timerContainer = document.getElementById('time');
+                const progressBar = document.getElementById('progress');
+                const instruction = document.getElementById('instruction');
+                const startButton = document.getElementById('start-button');
+                const restartButton = document.getElementById('restart-button');
+                const hackingGameContainer = document.getElementById('hacking-game-container');
+                const instructions = document.getElementById('instructions');
+                const attemptsCount = document.getElementById('attempts-count');
+                const buttons = document.querySelectorAll('.button');
+                const memorizeTimerContainer = document.getElementById('memorize-timer-container');
+                const memorizeTimerBar = document.getElementById('memorize-timer-bar');
+                const inputContainer = document.getElementById('input-container');
+                const userInput = document.getElementById('user-input');
+                const submitButton = document.getElementById('submit-button');
+            const successSound = document.getElementById('success-sound');
+            const failSound = document.getElementById('fail-sound');
+
+                let stages = [];
+                let currentStage = 0;
+                let timeLeft = configuracao.tempo_limite;
+                let attempts = 5; // Tentativas iniciais
+                let timer;
+
+                function generateArithmeticSequence(length, start, step) {
+                    return Array.from({ length }, (_, i) => start + i * step);
+                }
+
+                function generateGeometricSequence(length, start, factor) {
+                    return Array.from({ length }, (_, i) => start * Math.pow(factor, i));
+                }
+
+                function generateFibonacciSequence(length) {
+                    const seq = [1, 1];
+                    for (let i = 2; i < length; i++) {
+                        seq.push(seq[i - 1] + seq[i - 2]);
                     }
-                    stages.push({
-                        type: 'sequence',
-                        data: seq
-                    });
+                    return seq;
                 }
-            }
-            loadStage();
-        }
-    
-        function loadStage() {
-            if (currentStage >= stages.length) {
-                resultContainer.innerHTML = '<p class="stage-complete">Você concluiu todas as etapas!</p>';
-                clearInterval(timer);
-                fetch("{% url 'hacking_mini_game_view' game.id %}", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token }}'
-                    },
-                    body: JSON.stringify({ completed: true })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.next_screen_url) {
-                        window.location.href = data.next_screen_url;
-                    } else {
-                        alert(data.message);
+
+                function generateStages(dificuldade) {
+                    const length = dificuldade === 'fácil' ? 3 : dificuldade === 'média' ? 5 : dificuldade === 'difícil' ? 7 : 5;
+                    for (let i = 0; i < length; i++) {
+                        if (i % 2 === 0) {
+                            stages.push({
+                                type: 'pattern',
+                                data: Array.from({ length: 5 }, () => Math.floor(Math.random() * 10))
+                            });
+                        } else {
+                            const sequenceType = Math.floor(Math.random() * 3);
+                            let seq;
+                            switch (sequenceType) {
+                                case 0:
+                                    const start = Math.floor(Math.random() * 10);
+                                    const step = Math.floor(Math.random() * 5) + 1;
+                                    seq = generateArithmeticSequence(6, start, step);
+                                    break;
+                                case 1:
+                                    const gStart = Math.floor(Math.random() * 5) + 1;
+                                    const factor = Math.floor(Math.random() * 3) + 2;
+                                    seq = generateGeometricSequence(6, gStart, factor);
+                                    break;
+                                case 2:
+                                    seq = generateFibonacciSequence(6);
+                                    break;
+                            }
+                            stages.push({
+                                type: 'sequence',
+                                data: seq
+                            });
+                        }
                     }
-                });
-                return;
-            }
-    
-            const stage = stages[currentStage];
-            if (stage.type === 'pattern') {
-                instruction.textContent = "Memorize e repita o padrão:";
-                complexContainer.textContent = stage.data.join(' ');
-                setTimeout(() => {
-                    complexContainer.textContent = "???";
-                    startMemorizeTimer();
-                }, 4000);
-            } else if (stage.type === 'sequence') {
-                instruction.textContent = "Responda à sequência:";
-                complexContainer.textContent = `Qual é o próximo número? ${stage.data.slice(0, -1).join(', ')}, _`;
-                startMemorizeTimer();
-            }
-            inputContainer.style.display = 'block';
-            userInput.disabled = true;
-        }
-    
-        function checkStage(input) {
-            const stage = stages[currentStage];
-            const isCorrect = stage.type === 'pattern'
-                ? input.split('').map(Number).join('') === stage.data.join('')
-                : parseInt(input) === stage.data[stage.data.length - 1];
-    
-            if (isCorrect) {
-                currentStage++;
-                progressBar.style.width = `${(currentStage / stages.length) * 100}%`;
-                resultContainer.innerHTML = '<p class="stage-complete">Correto!</p>';
-                successSound.play();
-                loadStage();
-            } else {
-                resultContainer.innerHTML = '<p class="stage-failed">Resposta incorreta. Tente novamente.</p>';
-                failSound.play();
-                attempts--;
-                if (attempts > 0) {
-                    restartButton.style.display = 'block';
-                } else {
-                    window.location.href = "{% url 'lose' %}";
+                    loadStage();
                 }
-            }
-        }
-    
-        function resetGame() {
-            clearInterval(timer);
-            currentStage = 0;
-            progressBar.style.width = "0%";
-            resultContainer.innerHTML = '';
-            timeLeft = configuracao.tempo_limite;
-            attempts = 3;
-            attemptsCount.textContent = attempts;
-            restartButton.style.display = 'none';
-            generateStages(configuracao.dificuldade);
-            startTimer();
-        }
-    
-        function startMemorizeTimer() {
-            let memorizeTimeLeft = 5;
-            memorizeTimerBar.style.width = '100%';
-            timer = setInterval(() => {
-                memorizeTimeLeft--;
-                memorizeTimerBar.style.width = (memorizeTimeLeft / 5) * 100 + '%';
-                if (memorizeTimeLeft < 0) {
-                    clearInterval(timer);
-                    userInput.disabled = false; // Habilitar o input após a memorização
-                    startGameTimer();
-                }
-            }, 1000);
-        }
-    
-        function startGameTimer() {
-            timerContainer.style.display = 'block';
-            timeSpan.textContent = timeLeft;
-            timer = setInterval(() => {
-                timeSpan.textContent = timeLeft;
-                buttonsContainer.style.display = 'block';
-                if (timeLeft <= 0) {
-                    timerContainer.style.display = 'none';
-                    resultContainer.innerHTML = '<p>Tempo esgotado. Tente novamente.</p>';
-                    stopTimer();
-                    attempts--;
-                    if (attempts > 0) {
-                        restartButton.style.display = 'block';
-                        attemptsContainer.style.display = 'block';
-                        attemptsSpan.textContent = attempts;
-                    } else {
-                        resultContainer.innerHTML = '<p>Acabaram as tentativas. Você será redirecionado em 3 segundos...</p>';
+
+                function loadStage() {
+                    if (currentStage >= stages.length) {
+                        resultContainer.innerHTML = '<p class="stage-complete">Você concluiu todas as etapas!</p>';
+                        clearInterval(timer);
+                        fetch("{% url 'hacking_mini_game_view' game.id %}", {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': '{{ csrf_token }}'
+                            },
+                            body: JSON.stringify({ completed: true })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.next_screen_url) {
+                                window.location.href = data.next_screen_url;
+                            } else {
+                                alert(data.message);
+                            }
+                        });
+                        return;
+                    }
+
+                    const stage = stages[currentStage];
+                    if (stage.type === 'pattern') {
+                        instruction.textContent = "Memorize e repita o padrão:";
+                        complexContainer.textContent = stage.data.join(' ');
                         setTimeout(() => {
-                            window.location.href = "{% url 'lose' %}";
-                        }, 3000);
+                            complexContainer.textContent = "???";
+                            startMemorizeTimer();
+                        }, 4000);
+                    } else if (stage.type === 'sequence') {
+                        instruction.textContent = "Responda à sequência:";
+                        complexContainer.textContent = `Qual é o próximo número? ${stage.data.slice(0, -1).join(', ')}, _`;
+                        startMemorizeTimer();
+                    }
+                    inputContainer.style.display = 'block';
+                    userInput.disabled = true;
+                    submitButton.disabled = true;
+                }
+
+                function checkStage(input) {
+                    const stage = stages[currentStage];
+                    const isCorrect = stage.type === 'pattern'
+                        ? input.split('').map(Number).join('') === stage.data.join('')
+                        : parseInt(input) === stage.data[stage.data.length - 1];
+
+                    clearInterval(timer); // Pare o temporizador sempre que verificar a resposta
+
+                    if (isCorrect) {
+                        currentStage++;
+                        progressBar.style.width = `${(currentStage / stages.length) * 100}%`;
+                        resultContainer.innerHTML = '<p class="stage-complete">Correto!</p>';
+                        successSound.play();
+                    loadStage();
+                    } else {
+                        resultContainer.innerHTML = '<p class="stage-failed">Resposta incorreta. Tente novamente.</p>';
+                    failSound.play();
+                        attempts--; // Diminui as tentativas
+                        attemptsCount.textContent = attempts; // Atualiza o contador de tentativas
+                        userInput.disabled = true;
+                        submitButton.disabled = true;
+                        inputContainer.style.display = 'none';
+                        memorizeTimerContainer.style.display = 'none';
+
+                        if (attempts > 0) {
+                            restartButton.style.display = 'block';
+                        } else {
+                            resultContainer.innerHTML = '<p>Acabaram as tentativas. Você será redirecionado em 3 segundos...</p>';
+                            setTimeout(() => {
+                                window.location.href = "{% url 'lose' %}";
+                            }, 3000);
+                        }
                     }
                 }
-                timeLeft--;
-            }, 1000);
-        }
-    
-        function stopTimer() {
-            clearInterval(timer);
-        }
-    
-        function postCompletion() {
-            fetch("{% url 'hacking_mini_game_view' game.id %}", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token }}'
-                },
-                body: JSON.stringify({ completed: true })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.next_screen_url) {
-                    window.location.href = data.next_screen_url;
-                } else {
-                    alert(data.message);
+
+                function resetGame() {
+                    // Parar o timer, reiniciar o estágio atual e zerar o progresso
+                    clearInterval(timer);
+                    currentStage = 0;
+                    progressBar.style.width = "0%";
+                    resultContainer.innerHTML = ''; // Limpa mensagens de resultado
+                    timeLeft = configuracao.tempo_limite; // Reinicia o tempo
+                    timerContainer.textContent = ` ${timeLeft} segundos`; // Atualiza o contador de tempo
+                    // attempts = 5; // Reinicia as tentativas
+                    attemptsCount.textContent = attempts; // Atualiza o contador de tentativas
+
+                    // Ocultar ou resetar elementos visuais
+                    inputContainer.style.display = 'none';
+                    memorizeTimerContainer.style.display = 'none';
+                    userInput.value = ''; // Limpar o input do usuário
+                    restartButton.style.display = 'none'; // Esconder o botão de restart
+
+                    // Reiniciar os estágios do jogo
+                    stages = []; // Resetar o array de estágios
+                    generateStages(configuracao.dificuldade); // Gerar novos estágios
                 }
-            });
-        }
-    
-        buttons.forEach(button => {
-            button.addEventListener('click', () => {
-                const value = parseInt(button.getAttribute('data-value'));
-                checkStage(value);
-            });
-        });
-    
-        startButton.addEventListener('click', () => {
-            instructions.style.display = 'none';
-            hackingGameContainer.style.display = 'block';
-            generateStages(configuracao.dificuldade);
-            timeSpan.textContent = timeLeft;
-        });
-    
-        restartButton.addEventListener('click', resetGame);
-    
-        submitButton.addEventListener('click', () => {
-            const input = userInput.value;
-            checkStage(input);
-            userInput.value = '';
-        });
-    </script>
-</body>
+
+                function startMemorizeTimer() {
+                    let memorizeTime = 5;
+                    memorizeTimerContainer.style.display = 'block';
+                    memorizeTimerBar.style.width = '100%';
+                    const memorizeTimer = setInterval(() => {
+                        memorizeTime--;
+                        memorizeTimerBar.style.width = `${(memorizeTime / 5) * 100}%`;
+                        if (memorizeTime === 0) {
+                            clearInterval(memorizeTimer);
+                            inputContainer.style.display = 'block';
+                            userInput.disabled = false;
+                            submitButton.disabled = false;
+                            startTimer();
+                        }
+                    }, 1000);
+                }
+
+                function startTimer() {
+                    if (timer) { // Verifica se já existe um temporizador em execução
+                        clearInterval(timer); // Se sim, limpa o temporizador anterior
+                    }
+
+                    timeLeft = configuracao.tempo_limite; // Reinicia o tempo (se necessário)
+                    timer = setInterval(() => {
+                        timeLeft--;
+                        timerContainer.textContent = ` ${timeLeft} segundos`;
+                        if (timeLeft <= 0) {
+                            clearInterval(timer); // Para o timer quando o tempo se esgota
+                            resultContainer.innerHTML = '<p>Tempo esgotado! Tente novamente.</p>';
+                            attempts--; // Diminui as tentativas quando o tempo se esgota
+                            attemptsCount.textContent = attempts; // Atualiza o contador de tentativas
+                            if (attempts <= 0) {
+                                resultContainer.innerHTML = '<p>Acabaram as tentativas. Você será redirecionado em 3 segundos...</p>';
+                                setTimeout(() => {
+                                    window.location.href = "{% url 'lose' %}";
+                                }, 3000);
+                            }
+                        }
+                    }, 1000);
+                }
+
+                startButton.addEventListener('click', () => {
+                    instructions.style.display = 'none';
+                    hackingGameContainer.style.display = 'block';
+                    generateStages(configuracao.dificuldade);
+                });
+
+                submitButton.addEventListener('click', () => {
+                    checkStage(userInput.value);
+                    userInput.value = ''; // Limpa o campo de input
+                });
+
+                restartButton.addEventListener('click', resetGame);
+        </script>
+    </body>
 </html>
