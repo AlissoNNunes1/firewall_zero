@@ -10,7 +10,7 @@ class ChoiceInline(admin.TabularInline):
 
 class ChapterAdmin(admin.ModelAdmin):
     list_display = ('title', 'num', 'character')
-    fields = ['title', 'num', 'character']
+    fields = ['title', 'num', 'character', 'trilha_sonora']  # Adicione 'trilha_sonora' aos campos
 
 class ScreenAdmin(admin.ModelAdmin):
     list_display = ('name', 'num', 'title','chapter')
