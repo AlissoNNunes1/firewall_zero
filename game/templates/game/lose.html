@@ -40,10 +40,8 @@
 
     document.querySelector(".restart-button").addEventListener("click", function () {
         // Voltar para a tela anterior e recarregar
-        window.history.back();
-        setTimeout(function () {
-            window.location.reload();
-        }, 100);
+        window.history.go(-2);
+        ;
     });
 </script>
 </html>
